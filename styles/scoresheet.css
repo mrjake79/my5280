@@ -1,0 +1,102 @@
+.scoresheet {
+    display: inline-block;
+}
+
+.scoresheet .dateBox {
+    border: solid 1px;
+    width: 15em;
+    height: 3em;
+}
+
+.scoresheet .table {
+    display: inline-table;
+    border-collapse: collapse;
+}
+
+.scoresheet .row {
+    display: table-row;
+}
+
+.scoresheet .cell {
+    display: table-cell;
+    border: solid 1px;
+    height: 3em;
+    width: 4em;
+    vertical-align: middle;
+}
+
+.scoresheet .score, .scoresheet .paid, .scoresheet .handicap, 
+.scoresheet .total, .scoresheet .totalHandicap, .scoresheet .teamHandicap,
+.scoresheet .totalScore, .scoresheet .overallTotal {
+    text-align: center;
+}
+
+.scoresheet .number {
+    width: auto;
+    text-align: center;
+    display: none;
+}
+
+.scoresheet .blank {
+    border: none;
+}
+
+.scoresheet .header {
+    height: 1.5em;
+    text-align: center;
+}
+
+.scoresheet input {
+    text-align: center;
+}
+
+.scoresheet .date, .scoresheet .teamNameValue {
+    font-weight: bold;
+    font-size: 10pt;
+    display: inline-block;
+    padding: .5em;
+}
+
+.scoresheet .teamSection {
+    margin-top: 2em;
+}
+
+.scoresheet .teamName {
+    border: solid 1px;
+    height: 3em;
+}
+
+.scoresheet .doubles .score, .scoresheet .doubles .totalScore {
+    height: 6em;
+}
+
+.scoresheet .caption {
+    display: table-caption;
+    border: solid 1px;
+    height: 1.5em;
+    text-align: center;
+}
+
+.scoresheet .totals .cell {
+    border-top: double 3px;
+}
+
+.scoresheet .totals .blank {
+    border-top: none;
+}
+
+.scoresheet .score { width: 4em; }
+
+.scoresheet .teamPlayers .playerName { width: 15em; }
+
+.scoresheet .teamRoster {
+    border: solid 1px;
+}
+
+.scoresheet .teamRoster div {
+    width: auto;
+    padding: 0 2px;
+    border: none;
+    height: auto;
+}
+

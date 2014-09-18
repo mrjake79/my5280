@@ -63,6 +63,7 @@ $viewMode = ($curMatch && !$canSubmit);
 $canSubmit = false;
 
 ?>
+<link type='text/css' rel='stylesheet' href="<?php print WP_PLUGIN_URL; ?>/my5280/styles/scoresheet.css" />
 <h2 class='subtitle'><?php print $league->title; ?></h2>
 <br />
 <div class="scoresheet 8ballscotch">
