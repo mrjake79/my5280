@@ -72,10 +72,11 @@ class my5280 //extends LeagueManager
         // Register actions
         add_action('league_settings_5280pool', array($this, 'settings'));
         add_action('wp_head', function() {
-            wp_register_script('my5280', WP_PLUGIN_URL . '/my5280/jquery.storageapi.min.js', array('jquery'), '0.1');
-            wp_register_script('storageapi', WP_PLUGIN_URL . '/my5280/my5280.js', array('jquery'), '1.7.2');
+            wp_register_script('storageapi', WP_PLUGIN_URL . '/my5280/jquery.storageapi.min.js', array('jquery'), '1.7.2');
+            wp_register_script('my5280', WP_PLUGIN_URL . '/my5280/my5280.js', array('storageapi'), '0.1');
             wp_print_scripts(array('storageapi', 'my5280'));
         });
+        add_action('wp_ajax_my5280_update_scoresheet', array($this, 'updateScoresheet'));
         //add_action('cn_metabox_publish_atts', array($this, 'connectionsPublishAtts'));
 
         // Register short codes
@@ -106,6 +107,104 @@ class my5280 //extends LeagueManager
                 'Doubles' => 'doubles',
             ),
         );
+    }
+
+
+    /**
+     * Retrieve a match.
+     *
+     * @param integer Match ID.
+     * @return object my5280_Match object
+     */
+    public function getMatch($ID)
+    {
+        global $leaguemanager;
+        require_once(MY5280_PLUGIN_DIR . 'lib/match.php');
+        foreach($leaguemanager->getMatches('id=' . $ID) as $match) {
+            return new my5280_Match($match);
+        }
+        return null;
+    }
+
+
+    /**
+     * Retrieve a player.
+     *
+     * @param mixed Player name or ID.
+     * @param bool (Optional) Boolean indicating if the player should be automatically created.  When
+     *              $Name is numeric (an ID), this argument has no effect.
+     * @return object my5280_Player object
+     */
+    public function getPlayer($Name, $Create = true)
+    {
+        global $connections;
+        $cnRetrieve = $connections->retrieve;
+
+        // Handle a numeric name
+        if(is_numeric($Name)) {
+            $entry = $cnRetrieve->entry($Name);
+            if($entry) {
+                $entry = new cnEntry($entry);
+            } else {
+                return null;
+            }
+        } else {
+            // Parse the name
+            $parts = explode(',', $Name);
+            $count = count($parts);
+            if($count == 2) {
+                $firstName = trim($parts[1]);
+                $lastName = trim($parts[0]);
+            } elseif($count == 1) {
+                $parts = explode(' ', $Name);
+                $count = count($parts);
+                $firstName = $parts[0];
+                if($count >= 2) {
+                    $lastName = implode(' ', array_slice($parts, 1));
+                } else {
+                    $lastName = null;
+                }
+            } else {
+                $firstName = $Name;
+                $lastName = null;
+            }
+
+            // Search for the contact
+            $ret = $cnRetrieve->entries(array(
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+            ));
+
+            // Get the matching entry
+            $entry = null;
+            foreach($ret as $possible) {
+                if($possible->first_name == $firstName && $possible->last_name == $lastName) {
+                    $entry = $possible;
+                    break;
+                }
+            }
+
+            // Create a new entry (if requested)
+            if($entry === null) {
+                if($Create) {
+                    // Set basic information
+                    $entry = new cnEntry();
+                    $entry->setFirstName($firstName);
+                    $entry->setLastName($lastName);
+                    $entry->setEntryType('individual');
+                    $entry->setVisibility('private');
+                    $entry->setStatus('approved');
+                } else {
+                    return null;
+                }
+            } else {
+                $entry = new cnEntry($entry);
+            }
+        }
+
+        // Return the my5280_Player object
+        require_once(MY5280_PLUGIN_DIR . 'lib/player.php');
+        return new my5280_Player($entry);
     }
 
 
@@ -249,31 +348,64 @@ class my5280 //extends LeagueManager
             'league_id' => 0,
             'league_name' => '',
             'season' => false,
+            'mode' => null,
+            'title' => null,
+            'match_id' => isset($_GET['match']) ? $_GET['match'] : null,
         ), $atts ));
 
         // Get the league, session, and teams
         $league = $leaguemanager->getLeague($league_id);
         $session = new my5280_Session($league_id, $season);
 
+        // Determine the title
+        if(!isset($title) || $title === null) {
+            $title = $session->getName();
+        }
+
         // Check for a specific match
         $curMatch = null;
-        if(isset($_GET['match'])) {
-            $matches = $session->listMatches();
-            foreach($matches as $date => $dateMatches) {
-                foreach($dateMatches as $match) {
-                    if($match->id == $_GET['match']) {
-                        $curMatch = $match;
-                        break 2;
-                    }
-                }
+        if(isset($match_id) && $match_id !== null) {
+            $matches = $session->listMatches(false);
+            if(isset($matches[$match_id])) {
+                $curMatch = $matches[$match_id];
             }
         }
 
         // Determine the path to the template
         $template = null;
         if(isset($league->league_format)) {
-            $template = MY5280_PLUGIN_DIR . '/templates/scoresheets/' . $league->league_format . '.php';
+            $template = MY5280_PLUGIN_DIR . '/templates/scoresheets/' . $league->league_format . '_' . $mode . '.php';
             if(!file_exists($template)) $template = null;
+        }
+
+        // Get the home and away teams
+        if($curMatch) {
+            $teams = array(
+                'HOME' => $curMatch->getHomeTeam(),
+                'AWAY' => $curMatch->getAwayTeam(),
+            );
+        } else {
+            $teams = array(
+                'HOME' => null,
+                'AWAY' => null,
+            );
+        }
+
+        // Handle flags
+        if(!isset($mode) || $mode === null || $curMatch === null) {
+            $mode = 'view';
+        }
+
+        // Additional information needed for edit mode
+        if($mode == 'edit') {
+            // Get the players
+            $players = $curMatch->listPlayers();
+
+            // Get the home and away team scores
+            $scores = array(
+                'HOME' => $curMatch->listHomeScores(),
+                'AWAY' => $curMatch->listAwayScores(),
+            );
         }
 
         // Display the template
@@ -423,6 +555,66 @@ class my5280 //extends LeagueManager
         }
     }
 
+
+    /**
+     * Handle scoresheet form submission.
+     */
+    public function updateScoresheet()
+    {
+        // The first step is to determine the actual response type
+        $responseType = isset($_POST['responseType']) ? $_POST['responseType'] : 'html';
+
+        // We need to get the match
+        if(!empty($_POST['match'])) {
+            // Get the match
+            $match = $this->getMatch($_POST['match']);
+            if($match) {
+                // Get player, handicap, paid, and score lists
+                $players = (isset($_POST['player']) && is_array($_POST['player'])) ? $_POST['player'] : array();
+                $handicaps = (isset($_POST['handicap']) && is_array($_POST['handicap'])) ? $_POST['handicap'] : array();
+                $paid = (isset($_POST['paid']) && is_array($_POST['paid'])) ? $_POST['paid'] : array();
+                $scores = (isset($_POST['score']) && is_array($_POST['score'])) ? $_POST['score'] : array();
+
+                // Process the player list
+                foreach($players as $position => $id) {
+                    // Get player, handicap and amount paid
+                    $player = my5280::$instance->getPlayer($id);
+                    $handicap = isset($handicaps[$position]) ? $handicaps[$position] : null;
+                    $myPaid = isset($paid[$position]) ? $paid[$position] : null;
+
+                    // Add the player
+                    $match->addPlayer($position, $player, $handicap, $myPaid);
+                }
+
+                // Process the scores
+                foreach($scores as $game => $score) {
+                    $match->addScore($game, $score);
+                }
+
+                // Save the match
+                if($match->save()) {
+                    header(
+                        "Location: " . admin_url('admin.php') 
+                        . '?page=leaguemanager&subpage=match&league_id=' . $match->getLeagueId()
+                        . '&edit=' . $match->getId() . '&season=' . $match->getSeasonName()
+                    );
+                    exit;
+                } else {
+                    $this->showScoresheet(array(
+                        'league_id' => $match->getLeagueId(),
+                        'season' => $match->getSeasonName(),
+                        'mode' => 'edit',
+                        'title' => 'Enter Scoresheet',
+                        'match_id' => $match->getId(),
+                    ));
+                }
+            }
+        }
+
+        // Assume someone went directly to this URL and provide a generic response
+        return 0;
+    }
+
     static $instance;
 }
 
@@ -431,3 +623,4 @@ my5280::$instance = new my5280();
 
 // Constants
 define('MY5280_PLUGIN_DIR', plugin_dir_path(__FILE__)) . '/';
+define('MY5280_PLUGIN_URL', plugin_dir_url(__FILE__)) . '/';

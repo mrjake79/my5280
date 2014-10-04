@@ -24,6 +24,7 @@ $canSubmit = false;
 $iPlayer = 0;
 
 ?>
+<link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
 <style type='text/css'>
     .scoresheet .score { vertical-align: bottom; }
     .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
