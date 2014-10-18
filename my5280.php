@@ -77,6 +77,7 @@ class my5280 //extends LeagueManager
             wp_print_scripts(array('storageapi', 'my5280'));
         });
         add_action('wp_ajax_my5280_update_scoresheet', array($this, 'updateScoresheet'));
+        add_action('wp_ajax_my5280_update_schedule', array($this, 'updateSchedule'));
         //add_action('cn_metabox_publish_atts', array($this, 'connectionsPublishAtts'));
 
         // Register short codes
@@ -178,7 +179,7 @@ class my5280 //extends LeagueManager
             // Get the matching entry
             $entry = null;
             foreach($ret as $possible) {
-                if($possible->first_name == $firstName && $possible->last_name == $lastName) {
+                if(strcasecmp($possible->first_name, $firstName) == 0 && strcasecmp($possible->last_name, $lastName) == 0) {
                     $entry = $possible;
                     break;
                 }
@@ -326,7 +327,46 @@ class my5280 //extends LeagueManager
         $league = $leaguemanager->getLeague($league_id);
         $session = new my5280_Session($league_id, $season);
         $teams = $session->listTeams();
-        $matches = $session->listMatches();
+
+        // Initialize some helpful variables
+        $maxMatches = 0;
+
+        // Build the list of dates with their assigned matches
+        $dates = array();
+        foreach($session->listMatches() as $match) {
+            // Initialize the date
+            $date = $match->getDate();
+            if(!isset($dates[$date])) {
+                $dates[$date] = array(
+                    'note' => null,
+                    'noMatches' => false,
+                    'matches' => array()
+                );
+            }
+
+            // Add the match
+            $dates[$date]['matches'][$match->getNumber()] = $match;
+            $maxMatches = max($maxMatches, count($dates[$date]['matches']));
+        }
+
+        // Add special dates
+        foreach($session->listSpecialDates() as $date => $special) {
+            // Initialize the date
+            if(!isset($dates[$date])) {
+                $dates[$date] = array(
+                    'note' => null,
+                    'noMatches' => false,
+                    'matches' => array(),
+                );
+            }
+
+            // Add the note and update the noMatches flag
+            $dates[$date]['note'] = htmlentities($special['description']);
+            $dates[$date]['noMatches'] = !$special['matches'];
+        }
+
+        // Sort the dates
+        ksort($dates);
 
         include(MY5280_PLUGIN_DIR . '/templates/schedule.php');
     }
@@ -371,13 +411,6 @@ class my5280 //extends LeagueManager
             }
         }
 
-        // Determine the path to the template
-        $template = null;
-        if(isset($league->league_format)) {
-            $template = MY5280_PLUGIN_DIR . '/templates/scoresheets/' . $league->league_format . '_' . $mode . '.php';
-            if(!file_exists($template)) $template = null;
-        }
-
         // Get the home and away teams
         if($curMatch) {
             $teams = array(
@@ -406,6 +439,22 @@ class my5280 //extends LeagueManager
                 'HOME' => $curMatch->listHomeScores(),
                 'AWAY' => $curMatch->listAwayScores(),
             );
+        }
+
+        // Get an array of all players in the system
+        $allPlayers = cnRetrieve::individuals();
+        foreach(array_keys($allPlayers) as $id) {
+            $allPlayers[$id] = my5280::$instance->getPlayer($id);
+        }
+        uasort($allPlayers, function($a, $b) {
+            return strcasecmp($a->getName(), $b->getName());
+        });
+
+        // Determine the path to the template
+        $template = null;
+        if(isset($league->league_format)) {
+            $template = MY5280_PLUGIN_DIR . '/templates/scoresheets/' . $league->league_format . '_' . $mode . '.php';
+            if(!file_exists($template)) $template = null;
         }
 
         // Display the template
@@ -557,6 +606,91 @@ class my5280 //extends LeagueManager
 
 
     /**
+     * Handle schedule submission.
+     */
+    public function updateSchedule()
+    {
+        // Check for league and season name
+        $league = isset($_POST['league']) ? $_POST['league'] : null;
+        $season = isset($_POST['season']) ? $_POST['season'] : null;
+        if($league && $season) {
+            // Get the session
+            $session = $this->getSession($league, $season);
+
+            // Handle special dates
+            if(isset($_POST['specialDates']) && is_array($_POST['specialDates'])) {
+                // Clear the existing special dates
+                $session->clearSpecialDates();
+
+                // Add the new dates
+                foreach($_POST['specialDates'] as $sd) {
+                    $date = trim($sd['date']);
+                    $descr = trim($sd['description']);
+                    if($date != null && $descr != null) {
+                        $date = strtotime($date);
+                        if($date !== false) {
+                            $session->addSpecialDate(date('Y-m-d', $date), $descr, (bool) $sd['noMatches']);
+                        }
+                    }
+                }
+            }
+
+            // Handle team numbers
+            $teamLookup = array();
+            if(isset($_POST['teamNumbers']) && is_array($_POST['teamNumbers'])) {
+                // Get the teams
+                $teams = $session->listTeams();
+
+                // Process the numbers
+                foreach($_POST['teamNumbers'] as $number => $teamId) {
+                    $team = $teams[$teamId];
+                    $team->setTeamNumber($number);
+                    $team->save();
+
+                    $teamLookup[$number] = $team;
+                }
+            } else {
+                foreach($session->listTeams() as $team) {
+                    $teamLookup[$team->getTeamNumber()] = $team;
+                }
+            }
+
+            // Get schedule information
+            $dates = (isset($_POST['date']) && is_array($_POST['date'])) ? $_POST['date'] : array();
+            $homeTeams = (isset($_POST['homeTeam']) && is_array($_POST['homeTeam'])) ? $_POST['homeTeam'] : array();
+            $awayTeams = (isset($_POST['awayTeam']) && is_array($_POST['awayTeam'])) ? $_POST['awayTeam'] : array();
+
+            // Add matches
+            foreach($dates as $index => $date) {
+                $date = strtotime($date);
+                if($date !== false) {
+                    $date = date('Y-m-d', $date);
+                    foreach($homeTeams[$index] as $number => $homeTeam) {
+                        if(trim($homeTeam) != null && trim($awayTeams[$index][$number]) != null) {
+                            $match = $session->addMatch($date, $number);
+                            $match->setHomeTeam($teamLookup[$homeTeam]);
+                            $match->setAwayTeam($teamLookup[$awayTeams[$index][$number]]);
+                            $match->setLocation($teamLookup[$homeTeam]->getLocation());
+                        }
+                    }
+                }
+            }
+        }
+
+        // Save the session
+        $session->save();
+
+        // Redirect back to the page
+        header(
+            "Location: " . admin_url('admin.php') 
+            . '?page=leaguemanager&subpage=schedule&league_id=' . $session->getLeagueId()
+            . '&season=' . $session->getName()
+        );
+        exit;
+    }
+
+
+    /**
      * Handle scoresheet form submission.
      */
     public function updateScoresheet()
@@ -571,6 +705,7 @@ class my5280 //extends LeagueManager
             if($match) {
                 // Get player, handicap, paid, and score lists
                 $players = (isset($_POST['player']) && is_array($_POST['player'])) ? $_POST['player'] : array();
+                $otherPlayers = (isset($_POST['otherPlayer']) && is_array($_POST['otherPlayer'])) ? $_POST['otherPlayer'] : array();
                 $handicaps = (isset($_POST['handicap']) && is_array($_POST['handicap'])) ? $_POST['handicap'] : array();
                 $paid = (isset($_POST['paid']) && is_array($_POST['paid'])) ? $_POST['paid'] : array();
                 $scores = (isset($_POST['score']) && is_array($_POST['score'])) ? $_POST['score'] : array();
@@ -578,7 +713,17 @@ class my5280 //extends LeagueManager
                 // Process the player list
                 foreach($players as $position => $id) {
                     // Get player, handicap and amount paid
-                    $player = my5280::$instance->getPlayer($id);
+                    if($id == 'NONE') {
+                        $player = null;
+                    } elseif($id == 'OTHER') {
+                        if(isset($otherPlayers[$position])) {
+                            $player = my5280::$instance->getPlayer($otherPlayers[$position]);
+                        } else {
+                            $player = null;
+                        }
+                    } else {
+                        $player = my5280::$instance->getPlayer($id);
+                    }
                     $handicap = isset($handicaps[$position]) ? $handicaps[$position] : null;
                     $myPaid = isset($paid[$position]) ? $paid[$position] : null;
 

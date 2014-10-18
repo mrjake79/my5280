@@ -7,6 +7,16 @@ window.my5280 = {
 
 my5280.init = function()
 {
+    // Hide the other player select boxes
+    jQuery('.teamPlayer').each(function() {
+        if(this.options[this.selectedIndex].value == 'OTHER') {
+            jQuery(this).hide();
+            jQuery(this.parentNode).find('.otherPlayer').show();
+        } else {
+            jQuery(this.parentNode).find('.otherPlayer').hide();
+        }
+    });
+
     // Handle changes to form elements
     jQuery('.scoresheet input,select').change(my5280.handleChange);
 
@@ -24,6 +34,17 @@ my5280.handleChange = function()
     // Perform some specific processing
     switch(name) {
     case 'player':
+    case 'otherPlayer':
+        // Hide or show the other player select
+        if(name == 'player') {
+            if(this.options[this.selectedIndex].value == 'OTHER') {
+                jQuery(this.parentNode).find('.otherPlayer').show();
+            } else {
+                jQuery(this.parentNode).find('.otherPlayer').hide();
+            }
+        }
+
+        // Update the handicap
         var handicap = this.options[this.selectedIndex].getAttribute('handicap');
         if(handicap) {
             jQuery(this.parentNode.parentNode).find('.handicap input').each(function() {

@@ -111,7 +111,7 @@ class my5280_Player
      */
     public function getName($LastNameFirst = false)
     {
-        return $this->entry->getName();
+        return html_entity_decode($this->entry->getName());
     }
 
 

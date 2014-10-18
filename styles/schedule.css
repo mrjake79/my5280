@@ -1,0 +1,33 @@
+.schedule { 
+    display: table; 
+    border-collapse: collapse;
+}
+
+.schedule .week { 
+    display: table-row;
+}
+.schedule .headerContainer { 
+    display: table-cell; 
+    padding: 2px;
+    border-bottom: solid 1px;
+    width: 5%;
+}
+.schedule .header { 
+    text-align: center;
+}
+.schedule .matchContainer, .schedule .noMatchContainer { 
+    display: table-cell; 
+    padding: 2px;
+    border-bottom: solid 1px;
+    white-space: nowrap;
+    width: 10%;
+}
+.schedule .location {
+    font-size: smaller;
+}
+.schedule .separator {
+    display: none;
+}
+.schedule .date {
+    font-size: smaller;
+}

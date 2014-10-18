@@ -8,7 +8,13 @@ scoresheet edit form for 8-Ball 5x5
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
 <style type='text/css'>
     .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
+    .otherPlayer { display: none; }
 </style>
+<noscript>
+    <style type='text/css'>
+        .otherPlayer { display: block; }
+    </style>
+</noscript>
 <?php if($title): ?>
     <h2 class='subtitle'><?php print $title; ?></h2>
 <?php endif; ?>
@@ -40,7 +46,7 @@ scoresheet edit form for 8-Ball 5x5
                     <?php foreach($team->listPlayers() as $player): ?>
                         <div class='row player'>
                             <div class='cell playerName'>
-                                <?php print htmlentities($player->getName()); ?>
+                                <?php print $player->getName(); ?>
                             </div>
                             <div class='cell handicap'>
                                 <?php print round($player->getHandicap(), 0); ?>
@@ -64,16 +70,29 @@ scoresheet edit form for 8-Ball 5x5
                                 />
                             </div>
                             <div class='cell playerName player<?php print $i; ?>'>
-                                <select name="player[]">
+                                <select class='teamPlayer' name="player[<?php print $i; ?>]">
                                     <option value="NONE">(None/Forfeit)</option>
-                                    <?php foreach($team->listPlayers() as $player): ?>
+                                    <?php $found = false; foreach($team->listPlayers() as $player): ?>
                                         <option value="<?php print $player->getId(); ?>"
                                         handicap="<?php print round($player->getHandicap(), 0); ?>"
-                                        <?php if(isset($players[$i]) && $players[$i]['id'] == $player->getId()) print 'selected="selected"'; ?>
-                                        ><?php print htmlentities($player->getName()); ?></option>
+                                        <?php if(isset($players[$i]) && $players[$i]['id'] == $player->getId()) { $found = true; print 'selected="selected"'; } ?>
+                                        ><?php print $player->getName(); ?></option>
                                     <?php endforeach; ?>
-                                    <option value="OTHER">(Other)</option>
+                                    <option value="OTHER"
+                                    <?php if(!$found && isset($players[$i]) && $players[$i]['id'] != null) print 'selected="selected"'; ?>
+                                    >(Other)</option>
                                 </select>
+                                <div class='otherPlayer'>
+                                    <select name="otherPlayer[<?php print $i; ?>]">
+                                        <option value="">(Other Player)</option>
+                                        <?php foreach($allPlayers as $player): ?>
+                                            <option value="<?php print $player->getId(); ?>"
+                                            handicap="<?php print round($player->getHandicap(), 0); ?>"
+                                            <?php if(!$found && isset($players[$i]) && $players[$i]['id'] == $player->getId()) print 'selected="selected"'; ?>
+                                            ><?php print $player->getName(); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                             <div class='cell handicap'>
                                 <input type='number' name='handicap[]' maxlength='2' size='2' min='0' max='15' step='1'

@@ -52,30 +52,50 @@ class my5280_Session
      */
     public function addMatch($Date, $Number)
     {
-        $this->listMatches();
-
         // Check for an existing match
-        if(isset($this->matchIndex[$Date][$Number])) {
-            // Return the existing match
-            return $this->matches[$this->matchIndex[$Date][$Number]];
-        } else {
-            // Create a new match
-            $data = new StdClass();
-            $data->league_id = $this->getLeagueId();
-            $data->season = $this->getName();
-            $data->date = $Date . ' 00:00';
-            $data->custom = array(
-                 'number' => $Number,
-            );
-
-            // Add the match to the arrays
-            $index = count($this->matches);
-            $this->matches[$index] = new my5280_Match($data);
-            $this->matchIndex[$Date][$Number] = $index;
-
-            // Return the match
-            return $this->matches[$index];
+        foreach($this->listMatches() as $match) {
+            if($match->getDate() == $Date && $match->getNumber() == $Number) {
+                return $match;
+            }
         }
+
+        // Create a new match
+        $data = new StdClass();
+        $data->league_id = $this->getLeagueId();
+        $data->season = $this->getName();
+        $data->date = $Date . ' 00:00';
+        $data->custom = array(
+             'number' => $Number,
+        );
+
+        // Add the match to the arrays
+        $index = -(count($this->matches) + 1);
+        $this->matches[$index] = new my5280_Match($data);
+
+        // Return the match
+        return $this->matches[$index];
+    }
+
+
+    /**
+     * Add a date of special significance for the session.
+     *
+     * @param string Date
+     * @param string Description
+     * @param boolean TRUE if there are no matches on this date
+     */
+    public function addSpecialDate($Date, $Description, $NoMatches)
+    {
+        // Initialize the date array
+        if(!isset($this->season['specialDates'])) {
+            $this->season['specialDates'] = array();
+        }
+
+        // Add the special date
+        $this->season['specialDates'][$Date] = array(
+            'description' => $Description,
+            'matches' => !$NoMatches,
+        );
     }
 
 
@@ -98,6 +118,18 @@ class my5280_Session
         $this->teams[] = $team;
 
         return $team;
+    }
+
+
+    /**
+     * Clear the special dates from the session.
+     *
+     * @param none
+     * @return void
+     */
+    public function clearSpecialDates()
+    {
+        unset($this->season['specialDates']);
     }
 
 
@@ -149,6 +181,15 @@ class my5280_Session
 
 
     /**
+     * Retrieve the name of the league.
+     */
+    public function getLeagueName()
+    {
+        return $this->league->title;
+    }
+
+
+    /**
      * Retrieve the league format.
      *
      * @param none
@@ -157,6 +198,18 @@ class my5280_Session
     public function getLeagueFormat()
     {
         return $this->league->league_format;
+    }
+
+
+    /**
+     * Retrieve the number of match days for the session.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getMatchDays()
+    {
+        return $this->season['num_match_days'];
     }
 
 
@@ -215,13 +268,12 @@ class my5280_Session
      * @param none
      * @return array
      */
-    public function listMatches($DateIndexed = true)
+    public function listMatches()
     {
         if(empty($this->matches)) {
             require_once(dirname(__FILE__) . '/match.php');
 
             $matches = array();
-            $matchIndex = array();
 
             // Load the teams (for lookup)
             $this->listTeams();
@@ -231,30 +283,14 @@ class my5280_Session
             foreach($leaguemanager->getMatches($filter) as $match) {
                 // Add the match and index it
                 $index = $match->id;
-                $matches[$index] = new my5280_Match($match);
-                $date = substr($match->date, 0, 10);
-                if(!isset($matchIndex[$date])) $matchIndex[$date] = array();
-                $matchIndex[$date][$matches[$index]->getNumber()] = $index;
-            }
-
-            // Sort the match index on date
-            ksort($matchIndex);
-
-            // Store the match and index arrays
-            $this->matches = $matches;
-            $this->matchIndex = $matchIndex;
-        }
-
-        // Handle the indexed flag
-        if($DateIndexed) {
-            $matches = array();
-            foreach($this->matchIndex as $date => $numbers) {
-                $matches[$date] = array();
-                foreach($numbers as $number => $index) {
-                    $matches[$date][$number] = $this->matches[$index];
+                if($index == null) {
+                    $index = -(count($this->matches));
                 }
+                $matches[$index] = new my5280_Match($match);
             }
-            return $matches;
+
+            // Store the matches and index arrays
+            $this->matches = $matches;
         }
 
         return $this->matches;
@@ -285,6 +321,21 @@ class my5280_Session
             }
         }
         return $this->players;
+    }
+
+
+    /**
+     * Retrieve a list of information on special dates.
+     *
+     * @param none
+     * @return array
+     */
+    public function listSpecialDates()
+    {
+        if(isset($this->season['specialDates'])) {
+            return $this->season['specialDates'];
+        }
+        return array();
     }
 
 
@@ -668,15 +719,36 @@ class my5280_Session
 
         // Save the matches
         if($this->matches !== null) {
+            // Determine the dates represented in the matches
+            $dates = array();
             foreach($this->matches as $match) {
-                $match->save();
+                $date = $match->getDate();
+                $dates[$date] = $date;
             }
+
+            // Sort the dates
+            ksort($dates);
+            $matchDays = array_flip(array_values($dates));
+
+            // Save the matches, assigning the match day in the process
+            $count = 0;
+            $newList = array();
+            foreach($this->matches as $match) {
+                // Assign the match day
+                $match->setMatchDay($matchDays[$match->getDate()]);
+
+                // Save the match and add it to the new list (indexed on ID)
+                $match->save();
+                $newList[$match->getId()] = $match;
+            }
+            $this->matches = $newList;
+
+            $this->season['num_match_days'] = max($this->season['num_match_days'], count($dates));
         }
 
-        // Update the number of match days
+        // Save session information
         $league = $this->league;
         $season = $this->season;
-        $season['num_match_days'] = count($this->matchIndex);
         $league->seasons[$this->getName()] = $season;
         $lmLoader->adminPanel->saveSeasons($league->seasons, $league->id);
 

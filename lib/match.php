@@ -68,6 +68,13 @@ class my5280_Match
 
         if(!is_array($this->data->custom['players'])) $this->data->custom['players'] = array();
         $this->data->custom['players'][$Position] = $info;
+        ksort($this->data->custom['players']);
+
+        // Clear the away scores since we might be adding a player for the first time
+        $this->awayScores = null;
+
+        // Update total points (in case of handicap change)
+        $this->updateTotalScores();
     }
 
 
@@ -82,6 +89,9 @@ class my5280_Match
         // Save the score
         if(!is_array($this->data->custom['scores'])) $this->data->custom['scores'] = array();
         $this->data->custom['scores'][$Game] = $Score;
+
+        // Update the away score
+        $this->updateAwayScore($Game, $Score);
 
         // Update totals
         $this->updateTotalScores();
@@ -174,6 +184,15 @@ class my5280_Match
 
 
     /**
+     * Retrieve the match day.
+     */
+    public function getMatchDay()
+    {
+        return $this->data->match_day;
+    }
+
+
+    /**
      * Get the location of the match.
      *
      * @param none
@@ -228,37 +247,11 @@ class my5280_Match
     public function listAwayScores()
     {
         if($this->awayScores === null) {
-            // Include the functions for the format
-            $session = $this->getSession();
-            $format = $session->getLeagueFormat();
-            require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $format . '.php');
-
-            // Get the players for the match
-            $players = $this->listPlayers();
-
-            // Determine the scores
-            $scores = array();
+            // Update all away scores from the current home scores
+            $this->awayScores = array();
             foreach($this->listHomeScores() as $homeGame => $homeScore) {
-                // Determine home player
-                $homePlayer = $homeGame % 5;
-
-                // Get the away game and player
-                $awayGame = call_user_func('my5280_getAwayGame_' . $format, $homeGame);
-                $awayPlayer = ($awayGame % 5) + 5;
-
-                // Add to the scores
-                if($homeScore === 0 && $players[$homePlayer]['id'] == null) {
-                    $awayScore = 8;
-                } elseif($players[$awayPlayer]['id'] == null) {
-                    $awayScore = 0;
-                } else {
-                    $awayScore = 15 - $homeScore;
-                }
-                $scores[$awayGame] = $awayScore;
+                $this->updateAwayScore($homeGame, $homeScore);
             }
-
-            // Cache the scores
-            $this->awayScores = $scores;
         }
         return $this->awayScores;
     }
@@ -393,7 +386,9 @@ class my5280_Match
 
         // Save the players
         foreach($players as $player) {
-            $player->save();
+            if($player) {
+                $player->save();
+            }
         }
 
         return true;
@@ -451,6 +446,18 @@ class my5280_Match
 
 
     /**
+     * Assign the match day.
+     *
+     * @param integer The match day.
+     * @return void
+     */
+    public function setMatchDay($Value)
+    {
+        $this->data->match_day = $Value;
+    }
+
+
+    /**
      * Match data.
      */
     protected $data;
@@ -469,6 +476,40 @@ class my5280_Match
 
 
     /**
+     * Update an away score.
+     */
+    protected function updateAwayScore($HomeGame, $HomeScore)
+    {
+        if($this->awayScores !== null) {
+            // Include the functions for the format
+            $session = $this->getSession();
+            $format = $session->getLeagueFormat();
+            require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $format . '.php');
+
+            // Get the players for the match
+            $players = $this->listPlayers();
+
+            // Determine home player
+            $homePlayer = $HomeGame % 5;
+
+            // Get the away game and player
+            $awayGame = call_user_func('my5280_getAwayGame_' . $format, $HomeGame);
+            $awayPlayer = ($awayGame % 5) + 5;
+
+            // Add to the scores
+            if($HomeScore === 0 && $players[$homePlayer]['id'] == null) {
+                $awayScore = 8;
+            } elseif($players[$awayPlayer]['id'] == null) {
+                $awayScore = 0;
+            } else {
+                $awayScore = 15 - $HomeScore;
+            }
+            $this->awayScores[$awayGame] = $awayScore;
+        }
+    }
+
+
+    /**
      * Update the total scores from the score array.
      *
      * @param none
@@ -480,16 +521,20 @@ class my5280_Match
         $players = $this->listPlayers();
         $playerCount = count($players);
 
+        $handicaps = array();
+
         // Calculate home team handicap
         $hcpHome = 0;
         foreach(array_slice($players, 0, $playerCount / 2) as $player) {
             $hcpHome += $player['handicap'];
+            $handicaps[] = $player['handicap'];
         }
 
         // Calculate away team handicap
         $hcpAway = 0;
         foreach(array_slice($players, $playerCount / 2) as $player) {
             $hcpAway += $player['handicap'];
+            $handicaps[] = $player['handicap'];
         }
 
         // Determine total handicap points for each team

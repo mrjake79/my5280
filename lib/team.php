@@ -153,10 +153,12 @@ class my5280_Team
             if(isset($this->info->players)) {
                 include_once(dirname(__FILE__) . '/player.php');
                 foreach($this->info->players as $id) {
-                    $this->players[$id] = my5280::$instance->getPlayer($id);
+                    if($id !== 'NONE') {
+                        $this->players[$id] = my5280::$instance->getPlayer($id);
+                    }
                 }
                 uasort($this->players, function($a, $b) {
-                    return strcmp($a->getName(), $b->getName());
+                    return strcasecmp($a->getName(), $b->getName());
                 });
             }
         }
@@ -197,7 +199,7 @@ class my5280_Team
                 $this->info->title,
                 $this->info->website,
                 $this->info->coach,
-                $this->info->location,
+                $this->info->stadium,
                 $this->info->home,
                 $this->info->group,
                 $this->info->roster,
@@ -212,7 +214,7 @@ class my5280_Team
                 $this->info->title,
                 '', // website
                 '', // coach
-                $this->info->location,
+                $this->info->stadium,
                 '', // home
                 '', // group
                 '', // roster

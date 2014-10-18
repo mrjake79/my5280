@@ -21,6 +21,7 @@ class my5280AdminPanel
 
         add_action('admin_menu', array(&$this, 'menu'));
         add_action('leaguemanager_edit_match_5280pool', array($this, 'editMatch'), 10, 7);
+        add_action('team_edit_form_5280pool', array($this, 'editTeam'));
         add_action('admin_enqueue_scripts', function($hook) {
             if(isset($_GET['page']) && $_GET['page'] == 'leaguemanager' && isset($_GET['subpage']) && $_GET['subpage'] == 'match') {
                 wp_register_script('storageapi', WP_PLUGIN_URL . '/my5280/jquery.storageapi.min.js', array('jquery'), '1.7.2');
@@ -47,11 +48,22 @@ class my5280AdminPanel
 #        $menu['match']['show'] = false;
 #        unset($menu['team'], $menu['match']);
 
+        /*
         // Add a link for importing an XLSX file for the active session
         if($leaguemanager->getSeason($leaguemanager->getCurrentLeague())) {
             $menu['upload'] = array(
                 'title' => 'Upload',
                 'file' => dirname(__FILE__) . '/upload.php',
+                'show' => true,
+            );
+        }
+         */
+
+        // Easier match setup
+        if($leaguemanager->getSeason($leaguemanager->getCurrentLeague())) {
+            $menu['schedule'] = array(
+                'title' => 'Schedule',
+                'file' => dirname(__FILE__) . '/schedule.php',
                 'show' => true,
             );
         }
@@ -90,6 +102,18 @@ class my5280AdminPanel
             'mode' => 'edit',
             'match_id' => $matches[0]->id,
         ));
+    }
+
+
+    /**
+     * Add functionality to the team edit form.
+     */
+    public function editTeam($Team)
+    {
+        require_once(MY5280_PLUGIN_DIR . 'lib/team.php');
+        $Team = new my5280_Team($Team);
+
+        include(MY5280_PLUGIN_DIR . 'admin/team.php');
     }
 
 

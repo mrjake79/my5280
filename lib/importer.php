@@ -32,7 +32,7 @@ class my5280_Importer
         $teams = array();
         $reader = PHPExcel_IOFactory::createReader('Excel2007');
         $reader->setReadDataOnly(true);
-        $reader->setLoadSheetsOnly(array('Team Rosters', 'Schedule', 'Doubles'));
+        $reader->setLoadSheetsOnly(array('Team Rosters', 'Schedule', 'Doubles', 'Player Scores', 'Doubles Scores'));
         $excel = $reader->load($File['tmp_name']);
         $sheet = $excel->getSheetByName('Team Rosters');
         $lastRow = $sheet->getHighestRow();
@@ -153,7 +153,7 @@ class my5280_Importer
             $round = $row[2];
 
             // Process each match
-            $iDateMatch = 1;
+            $iDateMatch = 0;
             for($iMatch = 3; $iMatch < 14; $iMatch += 2) {
                 // Determine the team numbers for the home and away teams
                 $home = $row[$iMatch];
@@ -169,6 +169,43 @@ class my5280_Importer
                     $match->setAwayTeam($teamLookup[$away]);
                     $match->setLocation($teamLookup[$home]->getLocation());
                 }
+            }
+        }
+
+        // Import player scores
+        $sheet = $excel->getSheetByName('Player Scores');
+        $lastRow = $sheet->getHighestRow();
+        for($row = 2; $row <= $lastRow; ++$row) {
+            // Get the necessary cells
+            $cells = $sheet->rangeToArray('A' . $row . ':S' . $row, null, true, true, false);
+            $cells = $cells[0];
+            if(!$cells[0]) continue;
+
+            // Determine the date
+            $date = PHPExcel_Shared_Date::ExcelToPHP($cells[0]);
+            $date = date('Y-m-d', $date);
+
+            // Get the current match
+            if($curMatch == null || $curMatch->getDate() != $date || $curMatch->getNumber() != ($cells[1] - 1)) {
+                $curMatch = $Session->addMatch($date, $cells[1] - 1);
+            }
+
+            // Add player's only for 1st round information
+            if($cells[3] == 1) {
+                // Make sure there is a player
+                if($cells[6] != '') {
+                    // Add the player
+                    $player = my5280::$instance->getPlayer(ucwords($cells[6]));
+                    $curMatch->addPlayer($cells[2] - 1, $player, $cells[7], $cells[18]);
+                } else {
+                    // Add a forfeit player
+                    $curMatch->addPlayer($cells[2] - 1, null, $cells[7], $cells[18]);
+                }
+            }
+
+            // Add the score only for the home team
+            if($cells[12] == 'Home') {
+                $curMatch->addScore($cells[4] - 1, $cells[8]);
             }
         }
 
