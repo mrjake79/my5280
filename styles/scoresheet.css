@@ -100,3 +100,22 @@
     height: auto;
 }
 
+.singlesHandicaps, .doublesHandicaps {
+    display: inline-table;
+    margin-right: 1em;
+}
+
+.singlesHandicaps .caption, .doublesHandicaps .caption {
+    font-weight: bold;
+    display: table-caption;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.singlesHandicaps .player, .doublesHandicaps .doubles {
+    display: table-row;
+}
+
+.singleHandicaps .player div, .doublesHandicaps .doubles div {
+    display: table-cell;
+}

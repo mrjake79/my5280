@@ -1,122 +1,53 @@
 <?php
 /**
-scoresheet for scotch doubles
+scoresheet view form for scotch doubles
 
-*/
-
-if($curMatch) {
-    // Build the team list
-    $teams = $session->listTeams();
-    $teams = array(
-        'HOME' => $teams[$curMatch->home_team],
-        'AWAY' => $teams[$curMatch->away_team],
-    );
-
-    // Check for player scores
-    if(isset($curMatch->custom['home_players'])) {
-        // Get handicap information
-        $handicapPoints = array();
-        foreach($curMatch->custom['home_players'] as $name => $player) {
-            $handicapPoints['home']['singles']['total'] += $player['handicap'];
-            $handicapPoints['home']['players'][] = $name;
-        }
-
-        foreach($curMatch->custom['away_players'] as $name => $player) {
-            $handicapPoints['away']['singles']['total'] += $player['handicap'];
-            $handicapPoints['away']['players'][] = $name;
-        }
-
-        sort($handicapPoints['home']['players']);
-        $key = implode('+', $handicapPoints['home']['players']);
-        $handicapPoints['home']['doubles']['total'] = $curMatch->custom['doubles'][$key]['handicap'];
-
-        sort($handicapPoints['away']['players']);
-        $key = implode('+', $handicapPoints['away']['players']);
-        $handicapPoints['away']['doubles']['total'] = $curMatch->custom['doubles'][$key]['handicap'];
-
-        // Calculate per-round information
-        if($handicapPoints['home']['singles']['total'] > $handicapPoints['away']['singles']['total']) {
-            $handicapPoints['home']['singles']['perRound'] = 0;
-            $handicapPoints['away']['singles']['perRound'] = $handicapPoints['home']['singles']['total'] - $handicapPoints['away']['singles']['total'];
-        } else {
-            $handicapPoints['away']['singles']['perRound'] = 0;
-            $handicapPoints['home']['singles']['perRound'] = $handicapPoints['away']['singles']['total'] - $handicapPoints['home']['singles']['total'];
-        }
-
-        if($handicapPoints['home']['doubles']['total'] > $handicapPoints['away']['doubles']['total']) {
-            $handicapPoints['home']['doubles']['perRound'] = 0;
-            $handicapPoints['away']['doubles']['perRound'] = $handicapPoints['home']['doubles']['total'] - $handicapPoints['away']['doubles']['total'];
-        } else {
-            $handicapPoints['away']['doubles']['perRound'] = 0;
-            $handicapPoints['home']['doubles']['perRound'] = $handicapPoints['away']['doubles']['total'] - $handicapPoints['home']['doubles']['total'];
-        }
-    }
-} else {
-    $teams = array(
-        'HOME' => null,
-        'AWAY' => null,
-    );
-}
-
-$canSubmit = ($curMatch && ($curMatch->home_points + $curMatch->away_points) == 0);
-$viewMode = ($curMatch && !$canSubmit);
-$canSubmit = false;
-
+ */
 ?>
-<link type='text/css' rel='stylesheet' href="<?php print WP_PLUGIN_URL; ?>/my5280/styles/scoresheet.css" />
-<h2 class='subtitle'><?php print $league->title; ?></h2>
-<br />
+<link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
+<?php if($title): ?>
+    <h2 class='subtitle'><?php print $title; ?></h2>
+    <br />
+<?php endif; ?>
 <div class="scoresheet 8ballscotch">
     <div class='dateBox'>
         Date:
         <?php if($curMatch): ?>
-            <div class='date'><?php print date('n/j/Y', strtotime($curMatch->date)); ?></div>
+            <div class='date'><?php print date('n/j/Y', strtotime($curMatch->getDate())); ?></div>
         <?php endif; ?>
     </div>
     <?php foreach($teams as $label => $team): ?>
-        <?php
-            if($team):
-                // Initialize variables
-                $scores = array();
-                $doubles = array();
-                $roundTotals = array();
-                $totalScore = 0;
-
-                // Check for scores
-                $key = strtolower($label);
-                if(isset($curMatch->custom[$key . '_players'])):
-                    foreach($curMatch->custom[$key . '_players'] as $name => $player):
-                        $player['name'] = $name;
-                        $scores[] = $player;
-                    endforeach;
-                    if(isset($curMatch->custom['doubles'])):
-                        $names = array_keys($curMatch->custom[$key . '_players']);
-                        sort($names);
-                        $name = implode('+', $names);
-                        if(isset($curMatch->custom['doubles'][$name])):
-                            $doubles = $curMatch->custom['doubles'][$name]['scores'];
-                        endif;
-                    endif;
-                endif;
-            endif;
-        ?>
-        <div class='teamSection <?php if($viewMode) print 'view'; ?>'>
+        <div class='teamSection view'>
             <div class='teamName'>
                 <?php print $label; ?> TEAM:
                 <?php if($team): ?>
                     <div class='teamNameValue'><?php print $team->title; ?></div>
                 <?php endif; ?>
             </div>
-            <?php if($team && !$viewMode): ?>
+            <?php if($team): ?>
             <div class='teamRoster'>
-                <?php foreach($team->players as $player => $handicap): ?>
-                    <div class='player'>
-                        <div>
-                            <?php print htmlentities($player); ?>: 
-                            <?php print $handicap; ?>
+                <div class='singlesHandicaps'>
+                    <div class='caption'>Singles Handicaps</div>
+                    <?php foreach($team->listPlayers() as $player): ?>
+                        <div class='player'>
+                            <div>
+                                <?php print htmlentities($player->getName()); ?>: 
+                                <?php print round($player->getHandicap(), 0); ?>
+                            </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
+                <div class='doublesHandicaps'>
+                    <div class='caption'>Doubles Handicaps</div>
+                    <?php foreach($team->listDoubles() as $double): ?>
+                        <div class='doubles'>
+                            <div>
+                                <?php print htmlentities($double->getName()); ?>:
+                                <?php print round($double->getHandicap(), 0); ?>
+                            </div> 
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
             <?php endif; ?>
             <div class='table teamPlayers'>

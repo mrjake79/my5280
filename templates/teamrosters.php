@@ -5,7 +5,7 @@ Template page for team rosters.
 */
 
 usort($teams, function($a, $b) {
-    return strcasecmp($a->title, $b->title);
+    return strcasecmp($a->getName(), $b->getName());
 });
 
 ?>
@@ -13,10 +13,10 @@ usort($teams, function($a, $b) {
     <?php if(count($team->players)): ?>
         <table class='roster'>
             <caption><?php print $team->title; ?></caption>
-            <?php foreach($team->players as $player => $handicap): ?>
+            <?php foreach($team->listPlayers() as $player): ?>
                 <tr>
-                    <th><?php print htmlentities($player); ?></th>
-                    <td><?php print $handicap; ?></td>
+                    <th><?php print $player->getName(); ?></th>
+                    <td><?php print round($player->getHandicap(), 0); ?></td>
                 </tr>
             <?php endforeach; ?>
         </table>

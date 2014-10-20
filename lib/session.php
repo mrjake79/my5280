@@ -12,27 +12,6 @@ require_once(dirname(__FILE__) . '/PHPExcel/Classes/PHPExcel.php');
 
 class my5280_Session
 {
-    /**
-     * the teams for the session
-     */
-    var $teams;
-    var $teamLookup;
-
-    /**
-     * the league and session
-     */
-    protected $league;
-    protected $session;
-
-    /**
-     * the season name
-     */
-    var $name;
-
-    /**
-     * the matches for the session
-     */
-    var $matches;
 
 
     /**
@@ -61,6 +40,96 @@ class my5280_Session
             if($Season === null) $Season = false;
             $this->season = $leaguemanager->getSeason($this->league, $Season);
         }
+    }
+
+
+    /**
+     * Add a match to the session or retrieve an existing one for the combined arguments.
+     *
+     * @param date      The date of the match.
+     * @param integer   The match number.
+     * @param object    The match object.
+     */
+    public function addMatch($Date, $Number)
+    {
+        // Check for an existing match
+        foreach($this->listMatches() as $match) {
+            if($match->getDate() == $Date && $match->getNumber() == $Number) {
+                return $match;
+            }
+        }
+
+        // Create a new match
+        $data = new StdClass();
+        $data->league_id = $this->getLeagueId();
+        $data->season = $this->getName();
+        $data->date = $Date . ' 00:00';
+        $data->custom = array(
+             'number' => $Number,
+        );
+
+        // Add the match to the arrays
+        $index = -(count($this->matches) + 1);
+        $this->matches[$index] = new my5280_Match($data);
+
+        // Return the match
+        return $this->matches[$index];
+    }
+
+
+    /**
+     * Add a date of special significance for the session.
+     *
+     * @param string Date
+     * @param string Description
+     * @param boolean TRUE if there are no matches on this date
+     */
+    public function addSpecialDate($Date, $Description, $NoMatches)
+    {
+        // Initialize the date array
+        if(!isset($this->season['specialDates'])) {
+            $this->season['specialDates'] = array();
+        }
+
+        // Add the special date
+        $this->season['specialDates'][$Date] = array(
+            'description' => $Description,
+            'matches' => !$NoMatches,
+        );
+    }
+
+
+    /**
+     * Add a new team to the session.
+     *
+     * @param string Name of the team.
+     * @param string Home location for the team.
+     * @param object The new team object.
+     */
+    public function addTeam($Name, $Location)
+    {
+        $this->listTeams();
+
+        include_once(dirname(__FILE__) . '/team.php');
+        $team = new my5280_Team();
+        $team->setName($Name);
+        $team->setLocation($Location);
+        $team->setSession($this);
+        $this->teams[] = $team;
+
+        return $team;
+    }
+
+
+    /**
+     * Clear the special dates from the session.
+     *
+     * @param none
+     * @return void
+     */
+    public function clearSpecialDates()
+    {
+        unset($this->season['specialDates']);
     }
 
 
@@ -108,6 +177,39 @@ class my5280_Session
     public function getLeagueId()
     {
         return $this->league->id;
+    }
+
+
+    /**
+     * Retrieve the name of the league.
+     */
+    public function getLeagueName()
+    {
+        return $this->league->title;
+    }
+
+
+    /**
+     * Retrieve the league format.
+     *
+     * @param none
+     * @return string
+     */
+    public function getLeagueFormat()
+    {
+        return $this->league->league_format;
+    }
+
+
+    /**
+     * Retrieve the number of match days for the session.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getMatchDays()
+    {
+        return $this->season['num_match_days'];
     }
 
 
@@ -169,6 +271,8 @@ class my5280_Session
     public function listMatches()
     {
         if(empty($this->matches)) {
+            require_once(dirname(__FILE__) . '/match.php');
+
             $matches = array();
 
             // Load the teams (for lookup)
@@ -177,20 +281,18 @@ class my5280_Session
             global $leaguemanager;
             $filter = "league_id = {$this->getLeagueId()} and season = '{$this->getName()}'";
             foreach($leaguemanager->getMatches($filter) as $match) {
-                // Switch out team IDs with team numbers
-                $match->home_team_id = $match->home_team;
-                $match->home_team = $this->teamLookup[$match->home_team];
-                $match->away_team_id = $match->away_team;
-                $match->away_team = $this->teamLookup[$match->away_team];
-
-                // Add the match indexed on date and then date match #
-                $date = substr($match->date, 0, 10);
-                if(!isset($matches[$date])) $matches[$date] = array();
-                $matches[$date][$match->date_match] = $match;
+                // Add the match and index it
+                $index = $match->id;
+                if($index == null) {
+                    $index = -(count($this->matches));
+                }
+                $matches[$index] = new my5280_Match($match);
             }
 
+            // Store the matches and index arrays
             $this->matches = $matches;
         }
+
         return $this->matches;
     }
 
@@ -223,6 +325,21 @@ class my5280_Session
 
 
     /**
+     * Retrieve a list of information on special dates.
+     *
+     * @param none
+     * @return array
+     */
+    public function listSpecialDates()
+    {
+        if(isset($this->season['specialDates'])) {
+            return $this->season['specialDates'];
+        }
+        return array();
+    }
+
+
+    /**
      * listTeams:  Retrieve an array of information about the teams in the session.
      *
      * @param none
@@ -234,11 +351,13 @@ class my5280_Session
             $this->teams = array();
             $this->teamLookup = array();
 
+            include_once(dirname(__FILE__) . '/team.php');
+
             global $leaguemanager;
             $filter = "league_id = {$this->getLeagueId()} and season = '{$this->getName()}'";
             foreach($leaguemanager->getTeams($filter) as $team) {
-                $this->teams[$team->teamNumber] = $team;
-                $this->teamLookup[$team->id] = $team->teamNumber;
+                $this->teams[$team->id] = new my5280_Team($team);
+                $this->teamLookup[$team->number] = $team->id;
             }
         }
         return $this->teams;
@@ -589,135 +708,74 @@ class my5280_Session
 
 
     /**
-     * importTeams:  Import teams from the Excel file.
+     * Save changes to the session.
      *
      * @param none
-     * @return bool
+     * @return boolean Indicates success or failure.
      */
-    protected function importTeams($File, &$Errors = array())
+    public function save()
     {
-        global $leaguemanager, $lmLoader;
-        $lmAdmin = $lmLoader->adminPanel;
-        if(!$lmAdmin) return false;
+        global $lmLoader;
 
-        // Get the league
-        $league = $this->league;
-
-        // Get the existing teams from the database
-        $existing = $this->listTeams();
-
-        // Load teams from the database
-        $teams = $this->loadTeams($File);
-        foreach($teams as $team) {
-            // De-dup based on team number (name would be bad if someone was renamed)
-            if(isset($existing[$team['number']])) {
-                $old = $existing[$team['number']];
-                $lmAdmin->editTeam(
-                    $old->id,
-                    $team['name'],
-                    $old->website,
-                    $old->coach,
-                    $team['location'],
-                    $old->home,
-                    $old->group,
-                    $old->roster,
-                    array(
-                        'teamNumber' => $team['number'],
-                        'address' => $team['address'],
-                        'players' => $team['players'],
-                    ),
-                    $old->logo
-                );
-            } else {
-                $lmAdmin->addTeam(
-                    $this->getLeagueId(),
-                    $this->getName(),
-                    $team['name'],
-                    '', // website
-                    '', // coach
-                    $team['location'],
-                    '', // home
-                    '', // group
-                    '', // roster
-                    array(
-                        'teamNumber' => $team['number'],
-                        'address' => $team['address'],
-                        'players' => $team['players'],
-                    )
-                );
+        // Save the matches
+        if($this->matches !== null) {
+            // Determine the dates represented in the matches
+            $dates = array();
+            foreach($this->matches as $match) {
+                $date = $match->getDate();
+                $dates[$date] = $date;
             }
+
+            // Sort the dates
+            ksort($dates);
+            $matchDays = array_flip(array_values($dates));
+
+            // Save the matches, assigning the match day in the process
+            $count = 0;
+            $newList = array();
+            foreach($this->matches as $match) {
+                // Assign the match day
+                $match->setMatchDay($matchDays[$match->getDate()]);
+
+                // Save the match and add it to the new list (indexed on ID)
+                $match->save();
+                $newList[$match->getId()] = $match;
+            }
+            $this->matches = $newList;
+
+            $this->season['num_match_days'] = max($this->season['num_match_days'], count($dates));
         }
 
-        $this->teams = null;
+        // Save session information
+        $league = $this->league;
+        $season = $this->season;
+        $league->seasons[$this->getName()] = $season;
+        $lmLoader->adminPanel->saveSeasons($league->seasons, $league->id);
+
         return true;
     }
 
 
     /**
-     * Load teams and rosters from the Excel file.
-     *
-     * @param none
-     * @return array
+     * the teams for the session
      */
-    protected function loadTeams($File)
-    {
-        $teams = array();
+    protected $teams = null;
+    protected $teamLookup = null;
 
-        // Load the Teams sheet from the file
-        $reader = PHPExcel_IOFactory::createReader('Excel2007');
-        $reader->setReadDataOnly(true);
-        $reader->setLoadSheetsOnly('Team Rosters');
-        $excel = $reader->load($File['tmp_name']);
-        $sheet = $excel->getSheetByName('Team Rosters');
-        $lastRow = $sheet->getHighestRow();
+    /**
+     * the league and session
+     */
+    protected $league;
+    protected $session;
 
-        // Process the team rows
-        for($row = 3; $row <= $lastRow; $row += 10) {
-            $cells = array();
-            $a = ord('A');
-            for($i = 0; $i < 10; $i++) {
-                $cells[$i] = array();
-                for($j = 1; $j < 11; $j++) {
-                    $cell = $sheet->getCell(chr($a + $j) . ($row + $i));
-                    try {
-                        $value = $cell->getCalculatedValue();
-                    } catch(Exception $e) {
-                        $value = $cell->getOldCalculatedValue();
-                    }
-                    $cells[$i][] = $value;
-                }
-            }
+    /**
+     * the season name
+     */
+    protected $name;
 
-            if($cells[1][0] != null && $cells[3][0] !== '') {
-                // Get basic information
-                $name = $cells[1][0];
-                if($name == strtolower($name)) {
-                    $name = ucwords($name);
-                }
-                $number = $cells[3][0];
-                $location = ucwords($cells[5][0]);
-                $address = $cells[7][0];
-
-                // Get players
-                $players = array();
-                for($i = 0; $i < 10; $i++) {
-                    $plName = $cells[$i][1];
-                    if($plName != null) {
-                        $players[ucwords($plName)] = $cells[$i][8];
-                    }
-                }
-
-                // Add the team to the list
-                $teams[$number] = array(
-                    'number' => $number,
-                    'name' => $name,
-                    'location' => $location,
-                    'address' => $address,
-                    'players' => $players,
-                );
-            }
-        }
-
-        return $teams;
-    }
+    /**
+     * the matches for the session
+     */
+    protected $matches = null;
+    protected $matchLookup = null;
 }
