@@ -21,12 +21,6 @@ scoresheet edit form for 8-Ball 5x5
 <br style='clear: left;' />
 <form action="<?php print admin_url('admin-ajax.php'); ?>" method='post' id='scoresheetForm'>
     <div class='scoresheet 8ball5x5'>
-        <?php if($canSubmit): ?>
-            <div style='float: right;' class='startSubmissionLink'>
-                <a href='javascript:void(0);'
-                onclick="my5280.startScoreSubmission(<?php print $curMatch->id; ?>); return false;">Submit Scores</a>
-            </div>
-        <?php endif; ?>
         <div class='dateBox'>
             Date:
             <?php if($curMatch): ?>
