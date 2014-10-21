@@ -77,14 +77,14 @@ scoresheet edit form for 8-Ball 5x5
                                     >(Other)</option>
                                 </select>
                                 <div class='otherPlayer'>
-                                    <select name="otherPlayer[<?php print $i; ?>]">
+                                    <select id="otherPlayer<?php print $i; ?>" class='otherPlayer' name="otherPlayer[<?php print $i; ?>]">
                                         <option value="">(Other Player)</option>
-                                        <?php foreach($allPlayers as $player): ?>
+                                        <?php if($i == 0): foreach($allPlayers as $player): ?>
                                             <option value="<?php print $player->getId(); ?>"
                                             handicap="<?php print round($player->getHandicap(), 0); ?>"
                                             <?php if(!$found && isset($players[$i]) && $players[$i]['id'] == $player->getId()) print 'selected="selected"'; ?>
                                             ><?php print $player->getName(); ?></option>
-                                        <?php endforeach; ?>
+                                        <?php endforeach; endif; ?>
                                     </select>
                                 </div>
                             </div>
