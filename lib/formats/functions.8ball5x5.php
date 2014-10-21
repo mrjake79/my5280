@@ -19,3 +19,12 @@ function my5280_getAwayGame_8ball5x5($HomeGame)
     }
     return $awayGame;
 }
+
+
+/**
+ * Calculate the round for a game number.
+ */
+function my5280_getRoundNumber_8ball5x5($Game)
+{
+    return floor($Game / 5);
+}

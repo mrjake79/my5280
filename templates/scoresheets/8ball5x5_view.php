@@ -8,9 +8,10 @@ scoresheet view page for 8-Ball 5x5
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
 <style type='text/css'>
     .scoresheet .score { vertical-align: bottom; }
+    .scoresheet .score.played { vertical-align: middle; }
     .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
 </style>
-<h2 class='subtitle'><?php print $league->title; ?></h2>
+<h2 class='subtitle'><?php print $title; ?></h2>
 <br style='clear: left;' />
 <div class='scoresheet 8ball5x5'>
     <div class='dateBox'>
@@ -19,27 +20,27 @@ scoresheet view page for 8-Ball 5x5
             <div class='date'><?php print date('n/j/Y', strtotime($curMatch->getDate())); ?></div>
         <?php endif; ?>
     </div>
-    <?php foreach($teams as $label => $team): ?>
+    <?php $numPlayers = 5; $firstPlayer = 0; foreach($teams as $label => $info): ?>
         <div class='teamSection <?php print $label; ?>'>
             <div class='teamName'>
                 <?php print $label; ?> TEAM:
-                <?php if($team): ?>
-                    <div class='teamNameValue'><?php print $team->getName(); ?></div>
+                <?php if($info): ?>
+                    <div class='teamNameValue'><?php print $info['team']->getName(); ?></div>
                 <?php endif; ?>
             </div>
-            <?php if($team && !$viewMode): ?>
-            <div class='table teamRoster'>
-                <?php foreach($team->listPlayers() as $player): ?>
-                    <div class='row player'>
-                        <div class='cell playerName'>
-                            <?php print $player->getName() ?>
+            <?php if($info && count($info['scores']) == 0): ?>
+                <div class='table teamRoster'>
+                    <?php foreach($info['team']->listPlayers() as $player): ?>
+                        <div class='row player'>
+                            <div class='cell playerName'>
+                                <?php print $player->getName() ?>
+                            </div>
+                            <div class='cell handicap'>
+                                <?php print round($player->getHandicap(), 0); ?>
+                            </div>
                         </div>
-                        <div class='cell handicap'>
-                            <?php print round($player->getHandicap(), 0); ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
             <div class='table teamPlayers'>
                 <div class='caption'>Player Information</div>
@@ -48,17 +49,17 @@ scoresheet view page for 8-Ball 5x5
                     <div class='cell header'>Name</div>
                     <div class='cell header'>HCP</div>
                 </div>
-                <?php for($i = 0; $i < 5; $i++): ?>
+                <?php for($i = $firstPlayer; $i < ($firstPlayer + $numPlayers); $i++): ?>
                     <div class='row player'>
                         <div class='cell paid'>
-                            <?php print isset($players[$i]) ? $players[$i]['paid'] : '<br />'; ?>
+                            <?php print isset($info['selPlayers'][$i]) ? $info['selPlayers'][$i]['paid'] : '<br />'; ?>
                         </div>
                         <div class='cell playerName'>
-                            <?php print isset($players[$i]) ? $players[$i]['name'] : '<br />'; ?>
+                            <?php print isset($info['selPlayers'][$i]) ? $info['selPlayers'][$i]['player']->getName() : '<br />'; ?>
                         </div>
                         <div class='cell handicap'>
-                            <?php if(isset($players[$i])):
-                                print $players[$i]['handicap'];
+                            <?php if(isset($info['selPlayers'][$i])):
+                                print $info['selPlayers'][$i]['handicap'];
                             endif; ?>
                         </div>
                     </div>
@@ -66,8 +67,7 @@ scoresheet view page for 8-Ball 5x5
                 <div class='row'>
                     <div class='cell blank'><br /></div>
                     <div class='cell'>Handicap Points</div>
-                    <div class='cell teamHandicap'>
-                    </div>
+                    <div class='cell teamHandicap'><?php print $info['handicap']; ?></div>
                 </div>
                 <div class='row totals'>
                     <div class='cell blank'><br /></div>
@@ -91,20 +91,21 @@ scoresheet view page for 8-Ball 5x5
                             <?php 
                                 // Determine the game number
                                 $iGame = ($j * 5) + $i;
-                                if($iTeam):
-                                    $iGame -= $j;
-                                    if($iGame <= ($j * 5)):
-                                        $iGame += 5;
-                                    endif;
-                                endif;
                                 
                                 // Determine the break
-                                $break = ($j < 4) ? (($j % 2) == $iTeam) : (($iGame % 2) != $iTeam);
+                                $iBreak = $iGame;
+                                if($iTeam):
+                                    $iBreak -= $j;
+                                    if($iBreak <= ($j * 5)):
+                                        $iBreak += 5;
+                                    endif;
+                                endif;
+                                $break = ($j < 4) ? (($j % 2) == $iTeam) : (($iBreak % 2) != $iTeam);
                             ?>
-                            <div class="cell score">
-                                <?php if(isset($scores[$i]['scores'][$j])):
-                                    print $scores[$i]['scores'][$j];
-                                    $lineTotal += $scores[$i]['scores'][$j];
+                            <div class="cell score<?php if(isset($info['scores'][$iGame])) print ' played'; ?>">
+                                <?php if(isset($info['scores'][$iGame])):
+                                    print $info['scores'][$iGame];
+                                    $lineTotal += $info['scores'][$iGame];
                                 else:
                                     print '<div class="matchNumber">' . $iGame . ($break ? '<br />B' : '') . '</div>';
                                 endif; ?>
@@ -119,33 +120,21 @@ scoresheet view page for 8-Ball 5x5
                 <?php endfor; ?>
                 <div class='row handicaps'>
                     <div class='cell number'>HCP</div>
-                    <div class='cell handicap'></div>
-                    <div class='cell handicap'></div>
-                    <div class='cell handicap'></div>
-                    <div class='cell handicap'></div>
-                    <div class='cell handicap'></div>
-                    <div class='cell totalHandicap'></div>
+                    <?php $hcpTotal = 0; for($i = 0; $i < 5; $i++): $hcpTotal += $info['hcpPerRound']; ?>
+                        <div class='cell handicap'><?php print $info['hcpPerRound']; ?></div>
+                    <?php endfor; ?>
+                    <div class='cell totalHandicap'><?php print $hcpTotal; ?></div>
                 </div>
                 <div class='row totals'>
                     <div class='cell total number'>TOT</div>
-                    <div class='cell total'></div>
-                    <div class='cell total'></div>
-                    <div class='cell total'></div>
-                    <div class='cell total'></div>
-                    <div class='cell total'></div>
-                    <div class='cell overallTotal'>
-                        <?php if($curMatch):
-                            if($label == 'HOME' && $curMatch->home_points > 0) {
-                                print $curMatch->home_points;
-                            } elseif($label == 'AWAY' && $curMatch->away_points > 0) {
-                                print $curMatch->away_points;
-                            }
-                        endif; ?>
-                    </div>
+                    <?php for($iRound = 0; $iRound < 5; $iRound++): ?>
+                        <div class='cell total'><?php print $info['roundTotals'][$iRound]; ?></div>
+                    <?php endfor; ?>
+                    <div class='cell overallTotal'><?php print $info['totalPoints']; ?></div>
                 </div>
             </div>
         </div>
-    <?php endforeach; ?>
+    <?php $firstPlayer += $numPlayers; endforeach; ?>
     <?php if($canSubmit): ?>
         <div style='float: right;' class='startMatchLink mobile'>
             <a href='javascript:void(0);'
