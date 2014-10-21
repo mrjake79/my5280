@@ -239,6 +239,20 @@ class my5280_Match
 
 
     /**
+     * Get the away players.
+     *
+     * @param none
+     * @return array
+     */
+    public function listAwayPlayers()
+    {
+        $players = $this->listPlayers();
+        $count = count($players);
+        return array_slice($players, $count / 2, null, true);
+    }
+
+
+    /**
      * Get the away team scores.
      *
      * @param none
@@ -254,6 +268,20 @@ class my5280_Match
             }
         }
         return $this->awayScores;
+    }
+
+
+    /**
+     * Get the home players.
+     *
+     * @param none
+     * @return array
+     */
+    public function listHomePlayers()
+    {
+        $players = $this->listPlayers();
+        $count = count($players);
+        return array_slice($players, 0, $count / 2);
     }
 
 
