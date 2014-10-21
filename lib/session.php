@@ -143,10 +143,12 @@ class my5280_Session
     {
         $today = new DateTime('now', new DateTimeZone('America/Denver'));
         $today = $today->format('Y-m-d');
-        foreach(array_keys($this->listMatches()) as $match) {
-            if($match >= $today) return $match;
+        $future = array();
+        foreach($this->listMatches() as $match) {
+            $date = $match->getDate();
+            if($date >= $today) $future[$date] = $date;
         }
-        return null;
+        return min($future);
     }
 
 
@@ -312,7 +314,6 @@ class my5280_Session
             foreach($this->listMatches() as $date => $matches) {
                 foreach($matches as $match) {
                     foreach(array('home', 'away') as $key) {
-                        print '<pre>';print_r($match);exit;
                         if(isset($match->custom[$key . '_players'])) {
 
                         }
