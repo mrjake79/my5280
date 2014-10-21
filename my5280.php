@@ -413,9 +413,78 @@ class my5280 //extends LeagueManager
 
         // Get the home and away teams
         if($curMatch) {
-            $teams = array(
-                'HOME' => $curMatch->getHomeTeam(),
-                'AWAY' => $curMatch->getAwayTeam(),
+            $teams = array();
+
+            // Get home team information
+            $team = $curMatch->getHomeTeam();
+            $players = array();
+            foreach($team->listPlayers() as $player) {
+                $players[$player->getId()] = array(
+                    'id' => $player->getId(),
+                    'name' => $player->getName(),
+                    'handicap' => round($player->getHandicap(), 0),
+                    'sel' => array(),
+                );
+            }
+
+            // Indicate the selected players
+            foreach($curMatch->listHomePlayers() as $index => $player) {
+                $id = $player['id'];
+                if(!isset($players[$id])) {
+                    $players[$id] = array(
+                        'id' => $id,
+                        'name' => $player['player']->getName(),
+                        'handicap' => $player['handicap'],
+                        'sel' => array($index),
+                    );
+                } else {
+                    $players[$id]['handicap'] = $player['handicap'];
+                    $players[$id]['sel'][] = $index;
+                }
+            }
+
+            // Add the home team to the list
+            $teams['HOME'] = array(
+                'team' => $team,
+                'players' => $players,
+                'selPlayers' => $curMatch->listHomePlayers(),
+                'scores' => $curMatch->listHomeScores(),
+            );
+
+            // Get away team information
+            $team = $curMatch->getAwayTeam();
+            $players = array();
+            foreach($team->listPlayers() as $player) {
+                $players[$player->getId()] = array(
+                    'id' => $player->getId(),
+                    'name' => $player->getName(),
+                    'handicap' => round($player->getHandicap(), 0),
+                    'sel' => array(),
+                );
+            }
+
+            // Indicate the selected players
+            foreach($curMatch->listAwayPlayers() as $index => $player) {
+                $id = $player['id'];
+                if(!isset($players[$id])) {
+                    $players[$id] = array(
+                        'id' => $id,
+                        'name' => $player['player']->getName(),
+                        'handicap' => $player['handicap'],
+                        'sel' => array($index),
+                    );
+                } else {
+                    $players[$id]['handicap'] = $player['handicap'];
+                    $players[$id]['sel'][] = $index;
+                }
+            }
+
+            // Add the away team to the list
+            $teams['AWAY'] = array(
+                'team' => $team,
+                'players' => $players,
+                'selPlayers' => $curMatch->listAwayPlayers(),
+                'scores' => $curMatch->listAwayScores(),
             );
         } else {
             $teams = array(
@@ -427,18 +496,6 @@ class my5280 //extends LeagueManager
         // Handle flags
         if(!isset($mode) || $mode === null || $curMatch === null) {
             $mode = 'view';
-        }
-
-        // Additional information needed for edit mode
-        if($mode == 'edit') {
-            // Get the players
-            $players = $curMatch->listPlayers();
-
-            // Get the home and away team scores
-            $scores = array(
-                'HOME' => $curMatch->listHomeScores(),
-                'AWAY' => $curMatch->listAwayScores(),
-            );
         }
 
         // Get an array of all players in the system

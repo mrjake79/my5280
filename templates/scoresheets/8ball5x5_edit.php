@@ -8,11 +8,11 @@ scoresheet edit form for 8-Ball 5x5
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
 <style type='text/css'>
     .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
-    .otherPlayer { display: none; }
+    div.otherPlayer { display: none; }
 </style>
 <noscript>
     <style type='text/css'>
-        .otherPlayer { display: block; }
+        div.otherPlayer { display: block; }
     </style>
 </noscript>
 <?php if($title): ?>
@@ -27,17 +27,17 @@ scoresheet edit form for 8-Ball 5x5
                 <div class='date'><?php print date('n/j/Y', strtotime($curMatch->getDate())); ?></div>
             <?php endif; ?>
         </div>
-        <?php $numPlayers = 5; $firstPlayer = 0; foreach($teams as $label => $team): ?>
+        <?php $numPlayers = 5; $firstPlayer = 0; foreach($teams as $label => $info): ?>
             <div class='teamSection <?php print $label; ?>'>
                 <div class='teamName'>
                     <?php print $label; ?> TEAM:
-                    <?php if($team): ?>
-                        <div class='teamNameValue'><?php print $team->title; ?></div>
+                    <?php if($info): ?>
+                        <div class='teamNameValue'><?php print $info['team']->getName(); ?></div>
                     <?php endif; ?>
                 </div>
-                <?php if($team): ?>
+                <?php if($info): ?>
                 <div class='table teamRoster'>
-                    <?php foreach($team->listPlayers() as $player): ?>
+                    <?php foreach($info['team']->listPlayers() as $player): ?>
                         <div class='row player'>
                             <div class='cell playerName'>
                                 <?php print $player->getName(); ?>
@@ -60,17 +60,17 @@ scoresheet edit form for 8-Ball 5x5
                         <div class='row player'>
                             <div class='cell paid'>
                                 <input type='number' name='paid[]' maxlength='2' size='2' min='0' max='99' step='1' 
-                                <?php if(isset($players[$i])) print 'value="' . $players[$i]['paid'] . '"'; ?>
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['paid'] . '"'; ?>
                                 />
                             </div>
                             <div class='cell playerName player<?php print $i; ?>'>
                                 <select class='teamPlayer' name="player[<?php print $i; ?>]">
                                     <option value="NONE">(None/Forfeit)</option>
-                                    <?php $found = false; foreach($team->listPlayers() as $player): ?>
-                                        <option value="<?php print $player->getId(); ?>"
-                                        handicap="<?php print round($player->getHandicap(), 0); ?>"
-                                        <?php if(isset($players[$i]) && $players[$i]['id'] == $player->getId()) { $found = true; print 'selected="selected"'; } ?>
-                                        ><?php print $player->getName(); ?></option>
+                                    <?php $found = false; foreach($info['players'] as $player): ?>
+                                        <option value="<?php print $player['id']; ?>"
+                                        handicap="<?php print $player['handicap']; ?>"
+                                        <?php if(in_array($i, $player['sel'])) print 'selected="selected"'; ?>
+                                        ><?php print $player['name']; ?></option>
                                     <?php endforeach; ?>
                                     <option value="OTHER"
                                     <?php if(!$found && isset($players[$i]) && $players[$i]['id'] != null) print 'selected="selected"'; ?>
@@ -90,7 +90,7 @@ scoresheet edit form for 8-Ball 5x5
                             </div>
                             <div class='cell handicap'>
                                 <input type='number' name='handicap[]' maxlength='2' size='2' min='0' max='15' step='1'
-                                <?php if(isset($players[$i])) print 'value="' . $players[$i]['handicap'] . '"'; ?>
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['handicap'] . '"'; ?>
                                 />
                             </div>
                         </div>
@@ -128,10 +128,10 @@ scoresheet edit form for 8-Ball 5x5
                                     <div class="cell score game<?php print $iGame; ?>" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
-                                            <?php if(isset($scores['HOME'][$iGame])) print 'value="' . $scores['HOME'][$iGame] . '"'; ?>
+                                            <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
                                         />
-                                    <?php elseif(isset($scores['AWAY'][$iGame])): ?>
-                                        <?php print $scores['AWAY'][$iGame]; ?>
+                                    <?php elseif(isset($info['scores'][$iGame])): ?>
+                                        <?php print $info['scores'][$iGame]; ?>
                                     <?php endif; ?>
                                 </div>
                             <?php endfor; ?>
