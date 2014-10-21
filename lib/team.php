@@ -190,6 +190,8 @@ class my5280_Team
                 $players[] = $player->getId();
             }
             $custom['players'] = $players;
+        } elseif(isset($this->info->players)) {
+            $custom['players'] = $this->info->players;
         }
 
         // Determine if this is an existing team
