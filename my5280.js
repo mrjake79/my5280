@@ -7,7 +7,6 @@ window.my5280 = {
 
 my5280.init = function()
 {
-    /*
     // Hide the other player select boxes
     jQuery('.teamPlayer').each(function() {
         if(this.options[this.selectedIndex].value == 'OTHER') {
@@ -17,7 +16,6 @@ my5280.init = function()
             jQuery(this.parentNode).find('.otherPlayer').hide();
         }
     });
-    */
 
     // Copy other players from the first select box
     var allPlayers = document.getElementById('otherPlayer0').options;
