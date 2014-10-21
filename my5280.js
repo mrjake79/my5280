@@ -7,6 +7,7 @@ window.my5280 = {
 
 my5280.init = function()
 {
+    /*
     // Hide the other player select boxes
     jQuery('.teamPlayer').each(function() {
         if(this.options[this.selectedIndex].value == 'OTHER') {
@@ -14,6 +15,17 @@ my5280.init = function()
             jQuery(this.parentNode).find('.otherPlayer').show();
         } else {
             jQuery(this.parentNode).find('.otherPlayer').hide();
+        }
+    });
+    */
+
+    // Copy other players from the first select box
+    var allPlayers = document.getElementById('otherPlayer0').options;
+    jQuery('select.otherPlayer').each(function() {
+        if(this.id == 'otherPlayer0') return;
+
+        for(var i = 1; i < allPlayers.length - 1; i++) {
+            this.appendChild(allPlayers[i].cloneNode(true));
         }
     });
 
