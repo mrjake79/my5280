@@ -4,8 +4,16 @@ scoresheet edit form for scotch doubles
 
  */
 ?>
+<link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
+<style type='text/css'>
+    div.otherPlayer { display: none; }
+</style>
+<noscript>
+    <style type='text/css'>
+        div.otherPlayer { display: block; }
+    </style>
+</noscript>
 <form method='post'>
-    <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
     <?php if($title): ?>
         <h2 class='subtitle'><?php print $title; ?></h2>
         <br />
@@ -17,38 +25,12 @@ scoresheet edit form for scotch doubles
                 <div class='date'><?php print date('n/j/Y', strtotime($curMatch->getDate())); ?></div>
             <?php endif; ?>
         </div>
-        <?php foreach($teams as $label => $team): ?>
-            <?php
-                if($team):
-                    // Initialize variables
-                    $scores = array();
-                    $doubles = array();
-                    $roundTotals = array();
-                    $totalScore = 0;
-
-                    // Check for scores
-                    $key = strtolower($label);
-                    if(isset($curMatch->custom[$key . '_players'])):
-                        foreach($curMatch->custom[$key . '_players'] as $name => $player):
-                            $player['name'] = $name;
-                            $scores[] = $player;
-                        endforeach;
-                        if(isset($curMatch->custom['doubles'])):
-                            $names = array_keys($curMatch->custom[$key . '_players']);
-                            sort($names);
-                            $name = implode('+', $names);
-                            if(isset($curMatch->custom['doubles'][$name])):
-                                $doubles = $curMatch->custom['doubles'][$name]['scores'];
-                            endif;
-                        endif;
-                    endif;
-                endif;
-            ?>
-            <div class='teamSection edit'>
+        <?php $firstPlayer = 0; foreach($teams as $label => $info): $team = $info['team']; ?>
+            <div class='teamSection edit <?php print $label; ?>'>
                 <div class='teamName'>
                     <?php print $label; ?> TEAM:
                     <?php if($team): ?>
-                        <div class='teamNameValue'><?php print $team->title; ?></div>
+                        <div class='teamNameValue'><?php print $team->getName(); ?></div>
                     <?php endif; ?>
                 </div>
                 <?php if($team): ?>
@@ -58,7 +40,7 @@ scoresheet edit form for scotch doubles
                         <?php foreach($team->listPlayers() as $player): ?>
                             <div class='player'>
                                 <div>
-                                    <?php print htmlentities($player->getName()); ?>: 
+                                    <?php print $player->getName(); ?>: 
                                     <?php print round($player->getHandicap(), 0); ?>
                                 </div>
                             </div>
@@ -69,7 +51,7 @@ scoresheet edit form for scotch doubles
                         <?php foreach($team->listDoubles() as $double): ?>
                             <div class='doubles'>
                                 <div>
-                                    <?php print htmlentities($double->getName()); ?>:
+                                    <?php print $double->getName(); ?>:
                                     <?php print round($double->getHandicap(), 0); ?>
                                 </div> 
                             </div>
@@ -84,22 +66,39 @@ scoresheet edit form for scotch doubles
                         <div class='cell header'>Name</div>
                         <div class='cell header'>HCP</div>
                     </div>
-                    <?php for($i = 0; $i < 2; $i++): ?>
+                    <?php for($i = $firstPlayer; $i < $firstPlayer + 2; $i++): ?>
                         <div class='row player'>
                             <div class='cell paid'>
-                                <input type='number' name='paid[]' maxlength='2' size='2' min='0' max='99' step='1' />
+                                <input type='number' name='paid[]' maxlength='2' size='2' min='0' max='99' step='1'
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['paid'] . '"'; ?>
+                                />
                             </div>
-                            <div class='cell playerName'>
-                                <select name="player[]">
+                            <div class='cell playerName player<?php print $i ?>'>
+                                <select class='teamPlayer' name="player[<?php print $i ?>]">
                                     <option value="NONE">(None/Forfeit)</option>
-                                    <?php foreach($team->listPlayers() as $player): ?>
-                                        <option value="<?php print $player->getId(); ?>"><?php print htmlentities($player->getName()); ?></option>
+                                    <?php foreach($info['players'] as $player): ?>
+                                        <option value="<?php print $player['id']; ?>"
+                                        handicap="<?php print $player['handicap']; ?>"
+                                        <?php if(in_array($i, $player['sel'])) print 'selected="selected"'; ?>
+                                        ><?php print $player['name']; ?></option>
                                     <?php endforeach; ?>
                                     <option value="OTHER">(Other)</option>
                                 </select>
+                                <div class='otherPlayer'>
+                                    <select id="otherPlayer<?php print $i; ?>" class='otherPlayer' name='otherPlayer[<?php print $i; ?>]'>
+                                        <option value="">(Other Player)</option>
+                                        <?php if($i == 0): foreach($allPlayers as $player): ?>
+                                            <option value="<?php print $player->getId(); ?>"
+                                            handicap="<?php print round($player->getHandicap(), 0); ?>"
+                                            ><?php print $player->getName(); ?></option>
+                                        <?php endforeach; endif; ?>
+                                    </select>
+                                </div>
                             </div>
                             <div class='cell handicap'>
-                                <input type='number' name='handicap[]' maxlength='2' size='2' min='0' max='15' step='1' />
+                                <input type='number' name='handicap[]' maxlength='2' size='2' min='0' max='15' step='1'
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['handicap'] . '"'; ?>
+                                />
                             </div>
                         </div>
                     <?php endfor; ?>
@@ -187,7 +186,7 @@ scoresheet edit form for scotch doubles
                     </div>
                 </div>
             </div>
-        <?php endforeach; ?>
+        <?php $firstPlayer += 2; endforeach; ?>
     </div>
     <p class="submit"><input type="submit" value="Save Scores &raquo;" class="button" /></p>
 </form>

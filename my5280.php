@@ -129,6 +129,23 @@ class my5280 //extends LeagueManager
 
 
     /**
+     * Retrieve a doubles team.
+     *
+     * @param mixed First player's name or ID for doubles team.
+     * @param string Second player's name
+     * @param bool (Optional) Boolean indicating if the doubles team should be created automatically.
+     * @return my5280_Doubles object
+     */
+    public function getDoubles($First, $Second = null, $Create = true)
+    {
+        require_once(MY5280_PLUGIN_DIR . 'lib/doubles.php');
+        $doubles = new my5280_Doubles($First, $Second);
+        if($doubles->getId() === null && !$Create) return null;
+        return $doubles;
+    }
+
+
+    /**
      * Retrieve a player.
      *
      * @param mixed Player name or ID.
