@@ -82,7 +82,6 @@ scoresheet edit form for 8-Ball 5x5
                                         <?php if($i == 0): foreach($allPlayers as $player): ?>
                                             <option value="<?php print $player->getId(); ?>"
                                             handicap="<?php print round($player->getHandicap(), 0); ?>"
-                                            <?php if(!$found && isset($players[$i]) && $players[$i]['id'] == $player->getId()) print 'selected="selected"'; ?>
                                             ><?php print $player->getName(); ?></option>
                                         <?php endforeach; endif; ?>
                                     </select>
@@ -98,9 +97,7 @@ scoresheet edit form for 8-Ball 5x5
                     <div class='row'>
                         <div class='cell blank'><br /></div>
                         <div class='cell'>Handicap Points</div>
-                        <div class='cell teamHandicap'>
-                            <?php print $handicapTotal > 0 ? $handicapTotal : null; ?>
-                        </div>
+                        <div class='cell teamHandicap'><?php $info['handicap']; ?></div>
                     </div>
                     <div class='row totals'>
                         <div class='cell blank'><br /></div>

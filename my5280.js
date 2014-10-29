@@ -29,9 +29,6 @@ my5280.init = function()
 
     // Handle changes to form elements
     jQuery('.scoresheet input,select').change(my5280.handleChange);
-
-    // Update handicaps
-    my5280.updateTotals();
 }
 
 my5280.handleChange = function()

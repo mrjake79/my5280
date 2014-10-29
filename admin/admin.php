@@ -73,6 +73,19 @@ class my5280AdminPanel
 
 
     /**
+     * Display the import doubles page.
+     *
+     * @param none
+     */
+    public function displayDoublesImport()
+    {
+        global $leaguemanager;
+
+        include(MY5280_PLUGIN_DIR . 'admin/import_doubles.php');
+    }
+
+
+    /**
      * Display the import players page.
      *
      * @param none
@@ -114,6 +127,55 @@ class my5280AdminPanel
         $Team = new my5280_Team($Team);
 
         include(MY5280_PLUGIN_DIR . 'admin/team.php');
+    }
+
+
+    /**
+     * Import doubles from an Excel file.
+     *
+     * @param array $file Excel file.
+     * @return void
+     */
+    public function importDoubles($file)
+    {
+        global $connections;
+        $cnRetrieve = $connections->retrieve;
+
+        require_once(MY5280_PLUGIN_DIR . '/lib/PHPExcel/Classes/PHPExcel.php');
+
+        // Load the Players sheet from the file
+        $reader = PHPExcel_IOFactory::createReader('Excel2007');
+        $reader->setReadDataOnly(true);
+        $excel = $reader->load($file['tmp_name']);
+        $sheet = $excel->getActiveSheet();
+
+        // Get the my5280 instance
+        $my5280 = my5280::$instance;
+
+        // Extract the players
+        $lastRow = $sheet->getHighestRow();
+        for($row = 2; $row <= $lastRow; ++$row) {
+            // Get data
+            $cells = $sheet->rangeToArray('A' . $row . ':C' . $row, null, true, true, false);
+            $cells = $cells[0];
+            if(!$cells[0]) continue;
+
+            // Extract names
+            $names = explode('+', $cells[0]);
+            if(count($names) != 2) continue;
+
+            // Get the players
+            $players = array();
+            foreach($names as $name) {
+                $players[] = $my5280->getPlayer($name);
+            }
+
+            // Get the doubles, update, and save
+            $doubles = $my5280->getDoubles($players[0]->getName(), $players[1]->getName());
+            $doubles->setStartingGames($cells[1]);
+            $doubles->setStartingHandicap($cells[2]);
+            $doubles->save();
+        }
     }
 
 
@@ -202,8 +264,16 @@ class my5280AdminPanel
             __('Import Players','my5280'),
             __('Import Players','my5280'),
             'manage_options',
-            'my5280',
-            array(&$this, 'displayPlayerImport')
+            'my5280_import_players',
+            array($this, 'displayPlayerImport')
+        );
+        $page = add_submenu_page(
+            'leaguemanager',
+            __('Import Doubles','my5280'),
+            __('Import Doubles', 'my5280'),
+            'manage_options',
+            'my5280_import_doubles',
+            array($this, 'displayDoublesImport')
         );
     }
 
