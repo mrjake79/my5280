@@ -233,8 +233,11 @@ class my5280_Match
      */
     public function getSession()
     {
-        include_once(dirname(__FILE__) . '/session.php');
-        return new my5280_Session($this->data->league_id, $this->data->season);
+        if($this->session === null) {
+            include_once(dirname(__FILE__) . '/session.php');
+            $this->session = new my5280_Session($this->data->league_id, $this->data->season);
+        }
+        return $this->session;
     }
 
 
@@ -519,6 +522,12 @@ class my5280_Match
      * Match data.
      */
     protected $data;
+
+
+    /**
+     * The session.
+     */
+    protected $session = null;
 
 
     /**

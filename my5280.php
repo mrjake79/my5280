@@ -400,7 +400,7 @@ class my5280 //extends LeagueManager
 
         // Determine the title
         if(!isset($title) || $title === null) {
-            $title = $session->getName();
+            $title = $session->getName(true);
         }
 
         // Check for a specific match

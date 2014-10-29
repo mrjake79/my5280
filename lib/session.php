@@ -221,9 +221,16 @@ class my5280_Session
      * @param none
      * @return string
      */
-    public function getName()
+    public function getName($Pretty = false)
     {
-        return $this->season['name'];
+        $name = $this->season['name'];
+        if($Pretty) {
+            $pos = strpos($name, '-');
+            if($pos !== false) {
+                $name = substr($name, $pos + 1);
+            }
+        }
+        return $name;
     }
 
 
