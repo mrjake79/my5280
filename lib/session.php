@@ -70,7 +70,7 @@ class my5280_Session
 
         // Add the match to the arrays
         $index = -(count($this->matches) + 1);
-        $this->matches[$index] = new my5280_Match($data);
+        $this->matches[$index] = new my5280_Match($data, $this->getLeagueFormat());
 
         // Return the match
         return $this->matches[$index];
@@ -267,10 +267,11 @@ class my5280_Session
     /**
      * listMatches:  Retrieve an array of matches for the session.
      *
-     * @param none
+     * @param string (Optional) Boolean indicating if only finished matches (those with a home or away score) should
+     *                          be provided.  Default FALSE.
      * @return array
      */
-    public function listMatches()
+    public function listMatches($DoneOnly = false)
     {
         if(empty($this->matches)) {
             require_once(dirname(__FILE__) . '/match.php');
@@ -282,17 +283,22 @@ class my5280_Session
 
             global $leaguemanager;
             $filter = "league_id = {$this->getLeagueId()} and season = '{$this->getName()}'";
+            if($DoneOnly) $filter .= ' and (home_points != 0 or away_points != 0)';
             foreach($leaguemanager->getMatches($filter) as $match) {
                 // Add the match and index it
                 $index = $match->id;
                 if($index == null) {
                     $index = -(count($this->matches));
                 }
-                $matches[$index] = new my5280_Match($match);
+                $matches[$index] = new my5280_Match($match, $this->getLeagueFormat());
             }
 
             // Store the matches and index arrays
-            $this->matches = $matches;
+            if(!$DoneOnly) {
+                $this->matches = $matches;
+            } else {
+                return $matches;
+            }
         }
 
         return $this->matches;

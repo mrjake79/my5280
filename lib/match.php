@@ -17,26 +17,21 @@ class my5280_Match
      *
      * @param object Match data.
      */
-    public function __construct($Data)
+    public function __construct($Data, $Format = null)
     {
         // Store the data
         $this->data = $Data;
 
-        // Determine original scores
-        $players = $this->listPlayers();
-        $origScores = $this->calculateTotalPoints($players, $this->listHomeScores());
-        $awayPoints = $this->calculateTotalPoints(array_values(array_slice($players, 5)), $this->listAwayScores());
-        foreach($awayPoints as $player => $points) {
-            if(isset($origScores[$player])) {
-                $origScores[$player]['games'] += $points['games'];
-                $origScores[$player]['points'] += $points['points'];
-            } else {
-                $origScores[$player] = $points;
-            }
+        // Inclue the functions file for the session's format
+        if($Format === null) {
+            $session = $this->getSession();
+            $Format = $session->getLeagueFormat();
         }
+        require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $Format . '.php');
+        $this->format = $Format;
 
         // Store the original scores
-        $this->originalScores = $origScores;
+        $this->originalScores = $this->listPlayerPoints();
     }
 
 
@@ -70,8 +65,10 @@ class my5280_Match
         $this->data->custom['players'][$Position] = $info;
         ksort($this->data->custom['players']);
 
-        // Clear the away scores since we might be adding a player for the first time
+        // Clear the away scores and player list
         $this->awayScores = null;
+        $this->players = null;
+        $this->playerPoints = null;
 
         // Update total points (in case of handicap change)
         $this->updateTotalScores();
@@ -95,6 +92,9 @@ class my5280_Match
 
         // Update totals
         $this->updateTotalScores();
+
+        // Clear player points
+        $this->playerPoints = null;
     }
 
 
@@ -308,14 +308,44 @@ class my5280_Match
      */
     public function listPlayers()
     {
-        $players = array();
-        if(isset($this->data->custom['players'])) {
-            foreach($this->data->custom['players'] as $index => $info) {
-                $info['player'] = my5280::$instance->getPlayer($info['id']);
-                $players[$index] = $info;
+        if($this->players === null) {
+            $players = array();
+            if(isset($this->data->custom['players'])) {
+                foreach($this->data->custom['players'] as $index => $info) {
+                    $info['player'] = my5280::$instance->getPlayer($info['id']);
+                    $players[$index] = $info;
+                }
             }
+            $this->players = $players;
         }
-        return $players;
+        return $this->players;
+    }
+
+
+    /**
+     * Retrieve an array of totals points by player.
+     *
+     * @param none
+     * @return array
+     */
+    public function listPlayerPoints()
+    {
+        if($this->playerPoints === null) {
+            $players = $this->listPlayers();
+            $scores = $this->calculateTotalPoints($players, $this->listHomeScores());
+            $awayPoints = $this->calculateTotalPoints(array_values(array_slice($players, 5)), $this->listAwayScores());
+            foreach($awayPoints as $player => $points) {
+                if(isset($scores[$player])) {
+                    $scores[$player]['games'] += $points['games'];
+                    $scores[$player]['points'] += $points['points'];
+                    $scores[$player]['wins'] += $points['wins'];
+                } else {
+                    $scores[$player] = $points;
+                }
+            }
+            $this->playerPoints = $scores;
+        }
+        return $this->playerPoints;
     }
 
 
@@ -492,6 +522,24 @@ class my5280_Match
 
 
     /**
+     * Format of the session (league)
+     */
+    protected $format = null;
+
+
+    /**
+     * Players
+     */
+    protected $players = null;
+
+
+    /**
+     * Player points
+     */
+    protected $playerPoints = null;
+
+
+    /**
      * Away team scores.
      */
     protected $awayScores = null;
@@ -509,11 +557,6 @@ class my5280_Match
     protected function updateAwayScore($HomeGame, $HomeScore)
     {
         if($this->awayScores !== null) {
-            // Include the functions for the format
-            $session = $this->getSession();
-            $format = $session->getLeagueFormat();
-            require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $format . '.php');
-
             // Get the players for the match
             $players = $this->listPlayers();
 
@@ -521,7 +564,7 @@ class my5280_Match
             $homePlayer = $HomeGame % 5;
 
             // Get the away game and player
-            $awayGame = call_user_func('my5280_getAwayGame_' . $format, $HomeGame);
+            $awayGame = call_user_func('my5280_getAwayGame_' . $this->format, $HomeGame);
             $awayPlayer = ($awayGame % 5) + 5;
 
             // Add to the scores
@@ -597,10 +640,14 @@ class my5280_Match
                     $totals[$player] = array(
                         'games' => 0,
                         'points' => 0,
+                        'wins' => 0,
                     );
                 }
                 $totals[$player]['games']++;
                 $totals[$player]['points'] += $score;
+                if($score > 7) {
+                    $totals[$player]['wins']++;
+                }
             }
         }
 
