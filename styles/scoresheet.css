@@ -59,6 +59,7 @@
 
 .scoresheet .teamSection {
     margin-top: 2em;
+    white-space: nowrap;
 }
 
 .scoresheet .teamName {
@@ -70,7 +71,7 @@
     height: 6em;
 }
 
-.scoresheet .caption {
+.scoresheet .caption, .scoresheet .teamRoster .caption {
     display: table-caption;
     border: solid 1px;
     height: 1.5em;
@@ -85,12 +86,20 @@
     border-top: none;
 }
 
-.scoresheet .score { width: 4em; }
+.scoresheet .score, .scoresheet .paid, .scoresheet .handicap { width: 4em; }
 
 .scoresheet .teamPlayers .playerName { width: 15em; }
 
 .scoresheet .teamRoster {
     border: solid 1px;
+    width: 12em;
+    margin-top: 0;
+}
+
+.scoresheet .teamRoster .playerName { 
+    white-space: normal;
+    padding-left: 1em;
+    text-indent: -1em;
 }
 
 .scoresheet .teamRoster div {

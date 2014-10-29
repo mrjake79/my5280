@@ -95,6 +95,18 @@ class my5280_Team
 
 
     /**
+     * Retrieve the number of matches played.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getMatchesPlayed()
+    {
+        return $this->info->done_matches;
+    }
+
+
+    /**
      * Retrieve the team name.
      *
      * @param none
@@ -103,6 +115,18 @@ class my5280_Team
     public function getName()
     {
         return $this->info->title;
+    }
+
+
+    /**
+     * Retrieve the team's rank.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getRank()
+    {
+        return $this->info->rank;
     }
 
 
@@ -118,6 +142,18 @@ class my5280_Team
             return $this->info->number;
         }
         return null;
+    }
+
+
+    /**
+     * Get total points.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getTotalPoints()
+    {
+        return $this->info->points_plus;
     }
 
 
