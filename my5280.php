@@ -588,120 +588,22 @@ class my5280 //extends LeagueManager
         $session = new my5280_Session($league_id, $season);
         $teams = $session->listTeams();
 
-        // Get teams and initialize team totals
-        $teams = $session->listTeams();
-        foreach($teams as $team) {
-            $team->stats = array(
-                'points' => 0,
-                'wins' => 0,
-                'matches' => array(),
-            );
-        }
-
-        // Get matches
-        $players = array();
-        $matches = $session->listMatches();
-        foreach($matches as $date => $dateMatches) {
-            foreach($dateMatches as $match) {
-                if($match->home_points == 0 && $match->away_points == 0) continue;
-
-                $team = $teams[$match->home_team];
-                $team->stats['matches'][$date] = array(
-                    'score' => $match->home_points,
-                    'opponent' => $match->away_team,
-                );
-                $team->stats['points'] += $match->home_points;
-                if($match->winner_id == $match->home_team_id) {
-                    $team->stats['wins']++;
-                } elseif($match->home_points > 0 && $match->home_points == $match->away_points) {
-                    $team->stats['wins'] += 0.5;
-                }
-
-                $team = $teams[$match->away_team];
-                $team->stats['matches'][$date] = array(
-                    'score' => $match->away_points,
-                    'opponent' => $match->home_team,
-                );
-                $team->stats['points'] += $match->away_points;
-                if($match->winner_id == $match->away_team_id) {
-                    $team->stats['wins']++;
-                } elseif($match->away_points > 0 && $match->home_points == $match->away_points) {
-                    $team->stats['wins'] += 0.5;
-                }
-
-                // Handle player information
-                foreach(array('home', 'away') as $key) {
-                    if(isset($match->custom[$key . '_players'])) {
-                        foreach($match->custom[$key . '_players'] as $name => $player) {
-                            # Add the player
-                            if(!isset($players[$name])) {
-                                $players[$name] = array(
-                                    'name' => ucwords($name),
-                                    'wins' => 0,
-                                    'games' => 0,
-                                );
-                            }
-
-                            # Process scores
-                            foreach($player['scores'] as $score) {
-                                $players[$name]['games']++;
-                                if($score > 7) {
-                                    $players[$name]['wins']++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         // Sort the teams on total points
         uasort($teams, function($a, $b) {
-            if($a->stats['points'] < $b->stats['points']) {
-                return 1;
-            } elseif($a->stats['points'] > $b->stats['points']) {
+            if($a->getRank() < $b->getRank()) {
                 return -1;
+            } elseif($a->getRank() > $b->getRank()) {
+                return 1;
             } else {
                 return 0;
             }
         });
-
-        // Assign team placement
-        $iPlace = 0; $iNextPlace = 0; $prevScore = 0;
-        foreach($teams as $team) {
-            $iNextPlace++;
-            if($team->stats['points'] != $prevScore) {
-                $iPlace = $iNextPlace;
-            }
-            $team->stats['place'] = $iPlace;
-            $prevScore = $team->stats['points'];
-        }
 
         // Calculate player information
-        foreach($players as $name => $player) {
-            $players[$name]['win%'] = ($player['games'] > 0 ? round($player['wins'] / $player['games'] * 100, 2) : null);
-        }
-        uasort($players, function($a, $b) {
-            if($a['win%'] < $b['win%']) {
-                return 1;
-            } elseif($a['win%'] > $b['win%']) {
-                return -1;
-            } else {
-                return 0;
-            }
-        });
+        $players = array();
 
-        // Check for a requested team
-        if(isset($_GET['team']) && isset($teams[$_GET['team']])) {
-            /* Display team standings */
-
-            // Get the team
-            $team = $teams[$_GET['team']];
-            include(MY5280_PLUGIN_DIR . '/templates/teamstandings.php');
-        } else {
-            // Display overall standings
-            include(MY5280_PLUGIN_DIR . '/templates/standings.php');
-        }
+        // Display overall standings
+        include(MY5280_PLUGIN_DIR . '/templates/standings.php');
     }
 
 
