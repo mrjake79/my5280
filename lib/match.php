@@ -263,14 +263,21 @@ class my5280_Match
      */
     public function listAwayScores()
     {
-        if($this->awayScores === null) {
-            // Update all away scores from the current home scores
-            $this->awayScores = array();
-            foreach($this->listHomeScores() as $homeGame => $homeScore) {
-                $this->updateAwayScore($homeGame, $homeScore);
-            }
+        $awayScores = array();
+        foreach($this->listScores() as $iGame => $scores) {
+            $awayScores[$iGame] = array_pop($scores);
         }
-        return $this->awayScores;
+        return $awayScores;
+    }
+
+
+    /**
+     * Retrieve an array of players for a particular game.  The 1st player in the array
+     * is the home player and the 2nd is the away player.
+     */
+    public function listGamePlayers($Game)
+    {
+        return call_user_func('my5280_listGamePlayers_' . $this->format, $this, $Game);
     }
 
 
@@ -296,10 +303,11 @@ class my5280_Match
      */
     public function listHomeScores()
     {
-        if(isset($this->data->custom['scores'])) {
-            return $this->data->custom['scores'];
+        $homeScores = array();
+        foreach($this->listScores() as $iGame => $scores) {
+            $homeScores[$iGame] = array_shift($scores);
         }
-        return array();
+        return $homeScores;
     }
 
 
@@ -333,22 +341,49 @@ class my5280_Match
      */
     public function listPlayerPoints()
     {
-        if($this->playerPoints === null) {
-            $players = $this->listPlayers();
-            $scores = $this->calculateTotalPoints($players, $this->listHomeScores());
-            $awayPoints = $this->calculateTotalPoints(array_values(array_slice($players, 5)), $this->listAwayScores());
-            foreach($awayPoints as $player => $points) {
-                if(isset($scores[$player])) {
-                    $scores[$player]['games'] += $points['games'];
-                    $scores[$player]['points'] += $points['points'];
-                    $scores[$player]['wins'] += $points['wins'];
-                } else {
-                    $scores[$player] = $points;
+        $players = array();
+        foreach($this->listScores() as $score) {
+            if(is_array($score)) {
+                foreach($score as $player => $points) {
+                    if($player == null) continue;
+                    if(!isset($players[$player])) {
+                        $players[$player] = array('points' => 0, 'games' => 0, 'wins' => 0);
+                    }
+                    $players[$player]['points'] += $points;
+                    $players[$player]['games']++;
+                    if($score > 7) {
+                        $players[$player]['wins']++;
+                    }
                 }
             }
-            $this->playerPoints = $scores;
         }
-        return $this->playerPoints;
+        return $players;
+    }
+
+
+    /**
+     * Retrieve an array of score information for all games.
+     *
+     */
+    public function listScores()
+    {
+        if(isset($this->data->custom['scores'])) {
+            if(isset($this->data->custom['scores'][0]) && !is_array($this->data->custom['scores'][0])) {
+                $newScores = array();
+                for($iGame = 0; $iGame < 25; $iGame++) {
+                    $players = $this->listGamePlayers($iGame);
+                    $homeScore = $this->data->custom['scores'][$iGame];
+                    $awayScore =  $this->calculateAwayScore($iGame, $homeScore);
+                    $newScores[$iGame] = array(
+                        $players[0] => $homeScore,
+                        $players[1] => $awayScore,
+                    );
+                }
+                $this->data->custom['scores'] = $newScores;
+            }
+            return $this->data->custom['scores'];
+        }
+        return array();
     }
 
 
@@ -584,7 +619,7 @@ class my5280_Match
             } else {
                 $awayScore = 15 - $HomeScore;
             }
-            $this->awayScores[$awayGame] = $awayScore;
+            $this->awayScores[$HomeGame] = $awayScore;
         }
     }
 
@@ -629,6 +664,22 @@ class my5280_Match
         // Determine the total home and away points
         $this->data->home_points = $totalHome + array_sum($this->listHomeScores());
         $this->data->away_points = $totalAway + array_sum($this->listAwayScores());
+    }
+
+
+    /**
+     * Determine the away team score for a particular game given the home team score.
+     */
+    public function calculateAwayScore($Game, $Score)
+    {
+        $players = $this->listGamePlayers($Game);
+        if($players[0] == null) {
+            return 0;
+        } elseif($players[1] == null) {
+            return 0;
+        } else {
+            return 15 - $Score;
+        }
     }
 
 

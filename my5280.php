@@ -397,6 +397,7 @@ class my5280 //extends LeagueManager
         $league = $leaguemanager->getLeague($league_id);
         $session = new my5280_Session($league_id, $season);
         $format = $session->getLeagueFormat();
+        include_once(MY5280_PLUGIN_DIR.'lib/formats/functions.'.$format.'.php');
 
         // Determine the title
         if(!isset($title) || $title === null) {

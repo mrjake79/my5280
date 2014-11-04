@@ -124,6 +124,9 @@ scoresheet edit form for 8-Ball 5x5
                                 <?php 
                                     // Determine the game number
                                     $iGame = ($j * 5) + $i; 
+                                    if($label == 'AWAY') {
+                                        $iGame = call_user_func('my5280_getAwayGame_' . $session->getLeagueFormat(), $iGame);
+                                    }
                                 ?>
                                     <div class="cell score game<?php print $iGame; ?>" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
@@ -142,9 +145,11 @@ scoresheet edit form for 8-Ball 5x5
                     <div class='row handicaps'>
                         <div class='cell number'>HCP</div>
                         <?php for($i = 0; $i < 5; $i++): ?>
-                            <div class='cell handicap round<?php print $i; ?>'></div>
+                            <div class='cell handicap round<?php print $i; ?>'>
+                                <?php if(count($info['scores'])) print $info['hcpPerRound']; ?>
+                            </div>
                         <?php endfor; ?>
-                        <div class='cell totalHandicap'></div>
+                        <div class='cell totalHandicap'><?php if(count($info['scores'])) print $hcpTotal; ?></div>
                     </div>
                     <div class='row totals'>
                         <div class='cell total number'>TOT</div>
@@ -171,9 +176,9 @@ scoresheet edit form for 8-Ball 5x5
         var iRound = Math.floor(homeGame / 5);
 
         // Calculate the away game
-        var awayGame = homeGame + iRound;
-        if(awayGame >= ((iRound + 1) * 5)) {
-            awayGame -= 5;
+        var awayGame = homeGame - iRound;
+        if(awayGame < ((iRound) * 5)) {
+            awayGame += 5;
         }
         return awayGame;
     }
