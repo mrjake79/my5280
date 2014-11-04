@@ -351,7 +351,7 @@ class my5280_Match
                     }
                     $players[$player]['points'] += $points;
                     $players[$player]['games']++;
-                    if($score > 7) {
+                    if($points > 7) {
                         $players[$player]['wins']++;
                     }
                 }
@@ -368,22 +368,24 @@ class my5280_Match
     public function listScores()
     {
         if(isset($this->data->custom['scores'])) {
-            if(isset($this->data->custom['scores'][0]) && !is_array($this->data->custom['scores'][0])) {
-                $newScores = array();
-                for($iGame = 0; $iGame < 25; $iGame++) {
+            $scores = array();
+            foreach($this->data->custom['scores'] as $iGame => $score) {
+                if(is_array($score)) {
+                    $scores[$iGame] = $score;
+                } else {
                     $players = $this->listGamePlayers($iGame);
-                    $homeScore = $this->data->custom['scores'][$iGame];
-                    $awayScore =  $this->calculateAwayScore($iGame, $homeScore);
-                    $newScores[$iGame] = array(
-                        $players[0] => $homeScore,
+                    $awayScore =  $this->calculateAwayScore($iGame, $score);
+                    $scores[$iGame] = array(
+                        $players[0] => $score,
                         $players[1] => $awayScore,
                     );
                 }
-                $this->data->custom['scores'] = $newScores;
             }
-            return $this->data->custom['scores'];
+            $this->data->custom['scores'] = $scores;
+        } else {
+            $this->data->custom['scores'] = array();
         }
-        return array();
+        return $this->data->custom['scores'];
     }
 
 
@@ -462,22 +464,12 @@ class my5280_Match
             $players[$player]->adjustHandicap(-($score['games']), -($score['points']));
         }
 
-        // Add in the new home scores
-        $scores = $this->calculateTotalPoints($matchPlayers, $this->listHomeScores());
-        foreach($scores as $player => $score) {
+        // Record new points for the players
+        foreach($this->listPlayerPoints() as $player => $points) {
             if(!isset($players[$player])) {
                 $players[$player] = my5280::$instance->getPlayer($player);
             }
-            $players[$player]->adjustHandicap($score['games'], $score['points']);
-        }
-
-        // Add in the new away scores
-        $scores = $this->calculateTotalPoints(array_values(array_slice($matchPlayers, 5)), $this->listAwayScores());
-        foreach($scores as $player => $score) {
-            if(!isset($players[$player])) {
-                $players[$player] = my5280::$instance->getPlayer($player);
-            }
-            $players[$player]->adjustHandicap($score['games'], $score['points']);
+            $players[$player]->adjustHandicap($points['games'], $points['points']);
         }
 
         // Save the players

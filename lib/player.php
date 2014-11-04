@@ -116,6 +116,46 @@ class my5280_Player
 
 
     /**
+     * Retrieve the starting games for the player.
+     */
+    public function getStartingGames()
+    {
+        $meta = $this->loadMeta();
+        return $meta['my5280_lifetime_start'];
+    }
+
+
+    /**
+     * Retrieve the starting handicap for the player.
+     */
+    public function getStartingHandicap()
+    {
+        $meta = $this->loadMeta();
+        return $meta['my5280_handicap_start'];
+    }
+
+
+    /**
+     * Retrieve the total games recorded for the player.
+     */
+    public function getTotalGames()
+    {
+        $meta = $this->loadMeta();
+        return $meta['my5280_games'];
+    }
+
+
+    /**
+     * Retrieve the total points records for the player.
+     */
+    public function getTotalPoints()
+    {
+        $meta = $this->loadMeta();
+        return $meta['my5280_points'];
+    }
+
+
+    /**
      * Save the player.
      */
 

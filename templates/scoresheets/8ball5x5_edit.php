@@ -131,10 +131,10 @@ scoresheet edit form for 8-Ball 5x5
                                     <div class="cell score game<?php print $iGame; ?>" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
-                                            <?php if(isset($info['scores'][$iGame])) {
+                                            <?php if(isset($info['scores'][$iGame])):
                                                 print 'value="' . $info['scores'][$iGame] . '"';
                                                 $lineTotal += $info['scores'][$iGame];
-                                            ?>
+                                            endif; ?>
                                         />
                                     <?php elseif(isset($info['scores'][$iGame])): ?>
                                         <?php print $info['scores'][$iGame]; ?>

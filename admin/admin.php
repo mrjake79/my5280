@@ -205,6 +205,75 @@ class my5280AdminPanel
             'my5280',
             array(&$this, 'displayPlayerImport')
         );
+        $page = add_submenu_page(
+            'leaguemanager',
+            __('Update Handicaps','my5280'),
+            __('Update Handicaps','my5280'),
+            'manage_options',
+            'my5280_update_handicaps',
+            array($this, 'updateHandicaps')
+        );
+    }
+
+
+    /**
+     * update:  Update the handicaps using all available match data.
+     */
+    public function updateHandicaps()
+    {
+        global $leaguemanager;
+
+        // Calculate total points, games, and wins for all players using data
+        // from every match in the system
+        $players = array();
+        foreach($leaguemanager->getLeagues() as $league) {
+            foreach($league->seasons as $season) {
+                $session = new my5280_Session($league, $season['name']);
+                foreach($session->listMatches() as $match) {
+                    // Process player points
+                    foreach($match->listPlayerPoints() as $player => $points) {
+                        // Add the player if not already in the list
+                        if(!isset($players[$player])) {
+                            $p = my5280::$instance->getPlayer($player);
+                            $players[$player] = array(
+                                'object' => $p,
+                                'name' => $p->getName(),
+                                'currentGames' => $p->getTotalGames(),
+                                'currentPoints' => $p->getTotalPoints(),
+                                'currentHandicap' => $p->getHandicap(),
+                                'actualGames' => 0,
+                                'actualPoints' => 0,
+                            );
+                        }
+
+                        // Update games and points
+                        $players[$player]['actualGames'] += $points['games'];
+                        $players[$player]['actualPoints'] += $points['points'];
+                    }
+                }
+            }
+        }
+
+        // Make the adjustment for the players
+        $changed = array();
+        foreach($players as $p) {
+            $gameChange = $p['actualGames'] - $p['currentGames'];
+            $pointChange = $p['actualPoints'] - $p['currentPoints'];
+            if($gameChange != 0 || $pointChange != 0) {
+                $p['object']->adjustHandicap($gameChange, $pointChange);
+                $p['object']->save();
+                $p['actualHandicap'] = $p['object']->getHandicap();
+                $changed[] = $p;
+            }
+        }
+
+        // Sort the players
+        usort($changed, function($a, $b) {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        // Include the template
+        include(MY5280_PLUGIN_DIR . 'admin/update_handicaps.php');
     }
 
 
