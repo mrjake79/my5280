@@ -131,7 +131,10 @@ scoresheet edit form for 8-Ball 5x5
                                     <div class="cell score game<?php print $iGame; ?>" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
-                                            <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
+                                            <?php if(isset($info['scores'][$iGame])) {
+                                                print 'value="' . $info['scores'][$iGame] . '"';
+                                                $lineTotal += $info['scores'][$iGame];
+                                            ?>
                                         />
                                     <?php elseif(isset($info['scores'][$iGame])): ?>
                                         <?php print $info['scores'][$iGame]; ?>
@@ -139,6 +142,7 @@ scoresheet edit form for 8-Ball 5x5
                                 </div>
                             <?php endfor; ?>
                             <div class='cell totalScore'>
+                                <?php if($lineTotal !== null) print $lineTotal; ?>
                             </div>
                         </div>
                     <?php endfor; ?>
@@ -154,9 +158,12 @@ scoresheet edit form for 8-Ball 5x5
                     <div class='row totals'>
                         <div class='cell total number'>TOT</div>
                         <?php for($i = 0; $i < 5; $i++): ?>
-                            <div class='cell total round<?php print $i; ?>'></div>
+                            <div class='cell total round<?php print $i; ?>'>
+                                <?php print $info['roundTotals'][$iRound]; ?>
+                            </div>
                         <?php endfor; ?>
                         <div class='cell overallTotal'>
+                            <?php print $info['totalPoints']; ?>
                         </div>
                     </div>
                 </div>
