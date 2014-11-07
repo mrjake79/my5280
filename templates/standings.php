@@ -21,6 +21,7 @@ The following variables are usable:
             <th class='header cell'>Place</th>
             <th class='header cell nameCell'>Team</th>
             <th class='header cell'>Points</th>
+            <th class='header cell'>Weeks</th>
             <th class='header cell'>Avg</th>
         </tr>
         <?php foreach($teams as $team): ?>
@@ -29,12 +30,15 @@ The following variables are usable:
                 $weeks = count($team->stats['matches']);
             ?>
             <tr>
-                <td class='cell'><?php print $team->stats['place']; ?></td>
+                <td class='cell'><?php print $team->getRank(); ?></td>
                 <td class='cell nameCell'>
-                    <a href="?team=<?php print$team->teamNumber; ?>"><?php print $team->title; ?></a>
+                    <a href="?team=<?php print$team->getId() ?>"><?php print $team->getName(); ?></a>
                 </td>
-                <td class='cell'><?php print $team->stats['points'] . ' / ' . $weeks; ?></td>
-                <td class='cell'><?php print ($weeks > 0 ? number_format($team->stats['points'] / $weeks, 1) : 'n/a'); ?></td>
+                <td class='cell'><?php print $team->getTotalPoints(); ?></td>
+                <td class='cell'><?php print $team->getMatchesPlayed(); ?></td>
+                <td class='cell'>
+                    <?php if($team->getMatchesPlayed() > 0) print round($team->getTotalPoints() / $team->getMatchesPlayed(), 2); ?>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>
