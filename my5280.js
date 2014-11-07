@@ -74,13 +74,16 @@ my5280.handleChange = function()
         var homeGame = (homeRound * 5) + homePlayer;
 
         // Determine the away game and player
-        var awayGame = my5280_getAwayGame(homeGame);
-        var awayPlayer = (awayGame % 5) + 5;
+        var awayGame = homeGame;
+        var awayCell = jQuery('.scoresheet .AWAY .game' + awayGame)[0];
+        var awayPlayer = awayCell.parentNode.className;
+        var matches = /player(\d+)/.exec(awayPlayer);
+        awayPlayer = parseInt(matches[1]);
 
         // Determine the matching score
-        if(jQuery('.scoresheet .HOME .player' + homePlayer + ' select').val() == 'NONE') {
+        if(jQuery('.scoresheet .HOME .player' + homePlayer + ' select option:selected').val() == 'NONE') {
             var theirScore = 8;
-        } else if(jQuery('.scoresheet .AWAY .player' + awayPlayer + ' select').val() == 'NONE') {
+        } else if(jQuery('.scoresheet .AWAY .player' + awayPlayer + ' select option:selected').val() == 'NONE') {
             var theirScore = 0;
         } else {
             var myScore = parseInt(this.value);

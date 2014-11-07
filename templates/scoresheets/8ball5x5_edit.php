@@ -118,12 +118,12 @@ scoresheet edit form for 8-Ball 5x5
                         <div class='cell header'>5</div>
                         <div class='cell header'>TOT</div>
                     </div>
-                    <?php for($i = 0; $i < 5; $i++): $lineTotal = null; ?>
+                    <?php for($i = $firstPlayer; $i < ($firstPlayer + $numPlayers); $i++): $lineTotal = null; ?>
                         <div class='row scores player<?php print $i; ?>'>
                             <?php for($j = 0; $j < 5; $j++): ?>
                                 <?php 
                                     // Determine the game number
-                                    $iGame = ($j * 5) + $i; 
+                                    $iGame = ($j * 5) + $i - $firstPlayer; 
                                     if($label == 'AWAY') {
                                         $iGame = call_user_func('my5280_getAwayGame_' . $session->getLeagueFormat(), $iGame);
                                     }
