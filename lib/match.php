@@ -8,7 +8,7 @@
  * @copyright   Copyright 2014
  */
 
-include_once(dirname(__FILE__) . '/player.php');
+include_once(dirname(__FILE__) . '/matchplayer.php');
 
 class my5280_Match
 {
@@ -99,6 +99,21 @@ class my5280_Match
 
 
     /**
+     * Retrieve the away team's doubles handicap.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getAwayDoublesHandicap()
+    {
+        if(isset($this->data->custom['awayDoublesHandicap'])) {
+            return $this->data->custom['awayDoublesHandicap'];
+        }
+        return null;
+    }
+
+
+    /**
      * Retrieve the away team's score.
      *
      * @param none
@@ -125,6 +140,18 @@ class my5280_Match
 
 
     /**
+     * Retrieve the away team's ID.
+     *
+     * @param none
+     * @return object
+     */
+    public function getAwayTeamID()
+    {
+        return $this->data->away_team;
+    }
+
+
+    /**
      * Retrieve the date of the match.
      *
      * @param none
@@ -133,6 +160,21 @@ class my5280_Match
     public function getDate()
     {
         return substr($this->data->date, 0, 10);
+    }
+
+
+    /**
+     * Retrieve the home team's doubles handicap.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getHomeDoublesHandicap()
+    {
+        if(isset($this->data->custom['homeDoublesHandicap'])) {
+            return $this->data->custom['homeDoublesHandicap'];
+        }
+        return null;
     }
 
 
@@ -159,6 +201,18 @@ class my5280_Match
         $session = $this->getSession();
         $teams = $session->listTeams();
         return $teams[$this->data->home_team];
+    }
+
+
+    /**
+     * Retrieve the home team's ID.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getHomeTeamID()
+    {
+        return $this->data->home_team;
     }
 
 
@@ -249,9 +303,11 @@ class my5280_Match
      */
     public function listAwayPlayers()
     {
-        $players = $this->listPlayers();
-        $count = count($players);
-        return array_slice($players, $count / 2, null, true);
+        $teamID = $this->getAwayTeamID();
+        if($teamID !== null) {
+            return $this->listPlayers($teamID);
+        }
+        return array();
     }
 
 
@@ -275,6 +331,66 @@ class my5280_Match
 
 
     /**
+     * Retrieve an array of doubles "players" for the match.
+     */
+    public function listDoubles()
+    {
+        if($this->doubles === null) {
+            $doubles = array();
+
+            // Get doubles handicaps
+            if(isset($this->data->custom['doubleHandicaps'])) {
+                $handicaps = $this->data->custom['doubleHandicaps'];
+            } else {
+                $handicaps = array();
+            }
+
+            // Make sure there are doubles games
+            $session = $this->getSession();
+            if($session->getDoublesGames() > 0) {
+                // Doubles "players" come from a combination of every player doubling
+                // up with each other player on their team.
+                $playerCount = $session->getPlayerCount();
+                $teams = array($this->getHomeTeamID(), $this->getAwayTeamID());
+                foreach($teams as $iTeam => $teamID) {
+                    // Get the team's players
+                    $players = $teamID ? $this->listPlayers($teamID) : array();
+
+                    // Build the full list of doubles
+                    $iDoubles = 0;
+                    for($iPlayer1 = 0; $iPlayer1 < $playerCount; $iPlayer1++) {
+                        // Determine the first player's number and ID
+                        $playerNumber1 = $iPlayer1 + ($iTeam * $playerCount);
+                        $playerID1 = (isset($players[$playerNumber1]) ? $players[$playerNumber1]->getId() : null);
+
+                        // Loop through the partners
+                        for($iPlayer2 = $iPlayer1 + 1; $iPlayer2 < $playerCount; $iPlayer2++) {
+                            // Determine the second player's number and ID
+                            $playerNumber2 = $iPlayer2 + ($iTeam * $playerCount);
+                            $playerID2 = (isset($players[$playerNumber2]) ? $players[$playerNumber2]->getId() : null);
+
+                            // Get the doubles player and handicap
+                            $doubles = my5280::$instance->getDoubles($playerID1, $playerID2);
+                            $handicap = (isset($handicaps[$iDoubles]) ? $handicaps[$iDoubles] : round($doubles->getHandicap(), 0));
+
+                            // Add to the doubles list
+                            $doubles[$iDoubles] = new my5280_MatchPlayer($teamID, $iDoubles, $doubles->getId(), $handicap);
+
+                            // Increment the doubles "player" number
+                            $iDoubles++;
+                        }
+                    }
+                }
+            }
+
+            $this->doubles = $doubles;
+        }
+
+        return $this->doubles;
+    }
+
+
+    /**
      * Get the home players.
      *
      * @param none
@@ -282,9 +398,11 @@ class my5280_Match
      */
     public function listHomePlayers()
     {
-        $players = $this->listPlayers();
-        $count = count($players);
-        return array_slice($players, 0, $count / 2);
+        $teamID = $this->getHomeTeamID();
+        if($teamID !== null) {
+            return $this->listPlayers($teamID);
+        }
+        return array();
     }
 
 
@@ -306,10 +424,10 @@ class my5280_Match
     /**
      * Retrieve an array of the players.
      *
-     * @param none
+     * @param mixed     Team object or ID for the desired team, or NULL to get a list for both teams.
      * @return array
      */
-    public function listPlayers()
+    public function listPlayers($Team = null)
     {
         if($this->players === null) {
             $players = array();
@@ -457,6 +575,18 @@ class my5280_Match
 
 
     /**
+     * Assign the away team's doubles handicap.
+     *
+     * @param integer
+     * @return void
+     */
+    public function setAwayDoublesHandicap($Value)
+    {
+        $this->data->custom['awayDoublesHandicap'] = $Value;
+    }
+
+
+    /**
      * Assign the away team.
      *
      * @param string
@@ -478,6 +608,18 @@ class my5280_Match
     public function setDate($Date)
     {
         $this->data->date = $Date . ' 00:00';
+    }
+
+
+    /**
+     * Assign the home team's doubles handicap.
+     *
+     * @param integer
+     * @return void
+     */
+    public function setHomeDoublesHandicap($Value)
+    {
+        $this->data->custom['homeDoublesHandicap'] = $Value;
     }
 
 
@@ -576,14 +718,13 @@ class my5280_Match
             $awayGame = call_user_func('my5280_getAwayGame_' . $this->format, $HomeGame);
             $awayPlayer = ($awayGame % 5) + 5;
 
-            // Add to the scores
-            if($HomeScore === 0 && $players[$homePlayer]['id'] == null) {
-                $awayScore = 8;
-            } elseif($players[$awayPlayer]['id'] == null) {
-                $awayScore = 0;
-            } else {
+            // Handle doubles games
+            else {
+                $awayGame = $HomeGame;
                 $awayScore = 15 - $HomeScore;
             }
+
+            // Update the score
             $this->awayScores[$awayGame] = $awayScore;
         }
     }
@@ -597,38 +738,70 @@ class my5280_Match
      */
     protected function updateTotalScores()
     {
+        // Include the functions for the format
+        $session = $this->getSession();
+        $format = $session->getLeagueFormat();
+        require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $format . '.php');
+
+        // Determine player and doubles counts
+        $playerCount = call_user_func('my5280_getPlayerCount_' . $format);
+        $playerGames = $playerCount * $playerCount;
+        $doublesCount = call_user_func('my5280_getDoublesGames_' . $format);
+
         // Get the players
         $players = $this->listPlayers();
-        $playerCount = count($players);
 
-        $handicaps = array();
+        // Get home and away scores
+        $homeScores = $this->listHomeScores();
+        $awayScores = $this->listAwayScores();
+
+
+        /*
+         * Handle player handicaps.
+         */
 
         // Calculate home team handicap
         $hcpHome = 0;
-        foreach(array_slice($players, 0, $playerCount / 2) as $player) {
+        foreach(array_slice($players, 0, $playerCount) as $player) {
             $hcpHome += $player['handicap'];
-            $handicaps[] = $player['handicap'];
         }
 
         // Calculate away team handicap
         $hcpAway = 0;
-        foreach(array_slice($players, $playerCount / 2) as $player) {
+        foreach(array_slice($players, $playerCount) as $player) {
             $hcpAway += $player['handicap'];
-            $handicaps[] = $player['handicap'];
         }
 
         // Determine total handicap points for each team
         if($hcpHome > $hcpAway) {
             $totalHome = 0;
-            $totalAway = ($hcpHome - $hcpAway) * 5;
+            $totalAway = ($hcpHome - $hcpAway) * $playerCount;
         } else {
-            $totalHome = ($hcpAway - $hcpHome) * 5;
+            $totalHome = ($hcpAway - $hcpHome) * $playerCount;
             $totalAway = 0;
         }
 
+
+        /*
+         * Handle doubles handicaps.
+         */
+        if($doublesCount > 0) {
+            // Get the home and away handicaps
+            list($player1, $player2) = array_slice($players, 0, $playerCount);
+            $homeDoubles = my5280::$instance->getDoubles($player1['player'], $player2['player']);
+            $hcpHome = round($homeDoubles->getHandicap(), 0);
+
+            list($player1, $player2) = array_slice($players, $playerCount);
+            $awayDoubles = my5280::$instance->getDoubles($player1['player'], $player2['player']);
+            $hcpAway = round($awayDoubles->getHandicap(), 0);
+        }
+
+        // Handle doubles
+        #print '<pre>'; print_r($homeScores); print_r($awayScores);exit;
+
         // Determine the total home and away points
-        $this->data->home_points = $totalHome + array_sum($this->listHomeScores());
-        $this->data->away_points = $totalAway + array_sum($this->listAwayScores());
+        $this->data->home_points = $totalHome + array_sum($homeScores);
+        $this->data->away_points = $totalAway + array_sum($awayScores);
     }
 
 
@@ -637,7 +810,7 @@ class my5280_Match
      */
     protected function calculateTotalPoints($Players, $Scores)
     {
-        // Build original player scores
+        // Initialize the totals
         $totals = array();
 
         // Process home team scores

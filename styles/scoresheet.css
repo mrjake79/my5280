@@ -109,12 +109,22 @@
     height: auto;
 }
 
-.singlesHandicaps, .doublesHandicaps {
+.singlesHandicaps, .doublesHandicaps, .activeDoublesHandicap {
     display: inline-table;
     margin-right: 1em;
+    float: left;
 }
 
-.singlesHandicaps .caption, .doublesHandicaps .caption {
+.activeDoublesHandicap .row {
+    display: table-row;
+}
+
+.activeDoublesHandicap .cell {
+    display: table-cell;
+    text-align: center;
+}
+
+.singlesHandicaps .caption, .doublesHandicaps .caption, .activeDoublesHandicap {
     font-weight: bold;
     display: table-caption;
     text-align: left;

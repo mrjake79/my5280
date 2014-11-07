@@ -28,3 +28,21 @@ function my5280_getRoundNumber_8ball5x5($Game)
 {
     return floor($Game / 5);
 }
+
+
+/**
+ * Get the number of players per team.
+ */
+function my5280_getPlayerCount_8ball5x5()
+{
+    return 5;
+}
+
+
+/**
+ * Retrieve the number of doubles games played.
+ */
+function my5280_getDoublesGames_8ball5x5()
+{
+    return 0;
+}

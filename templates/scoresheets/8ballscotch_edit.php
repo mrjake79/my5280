@@ -13,7 +13,7 @@ scoresheet edit form for scotch doubles
         div.otherPlayer { display: block; }
     </style>
 </noscript>
-<form method='post'>
+<form method='post' action="<?php print admin_url('admin-ajax.php'); ?>">
     <?php if($title): ?>
         <h2 class='subtitle'><?php print $title; ?></h2>
         <br />
@@ -57,6 +57,17 @@ scoresheet edit form for scotch doubles
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    <div class='activeDoublesHandicap'>
+                        <div class='caption'>Active Doubles HCP</div>
+                        <div class='row'>
+                            <div class='cell'>
+                                <input type='number' name="doublesHandicap[<?php print $label; ?>]" max="15" min="0" size='2' length='2' 
+                                value="<?php print $info['doublesHandicap']; ?>"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <br clear='all' />
                 </div>
                 <?php endif; ?>
                 <div class='table teamPlayers'>
@@ -75,25 +86,14 @@ scoresheet edit form for scotch doubles
                             </div>
                             <div class='cell playerName player<?php print $i ?>'>
                                 <select class='teamPlayer' name="player[<?php print $i ?>]">
-                                    <option value="NONE">(None/Forfeit)</option>
+                                    <option value="NONE">(Select one)</option>
                                     <?php foreach($info['players'] as $player): ?>
                                         <option value="<?php print $player['id']; ?>"
                                         handicap="<?php print $player['handicap']; ?>"
                                         <?php if(in_array($i, $player['sel'])) print 'selected="selected"'; ?>
                                         ><?php print $player['name']; ?></option>
                                     <?php endforeach; ?>
-                                    <option value="OTHER">(Other)</option>
                                 </select>
-                                <div class='otherPlayer'>
-                                    <select id="otherPlayer<?php print $i; ?>" class='otherPlayer' name='otherPlayer[<?php print $i; ?>]'>
-                                        <option value="">(Other Player)</option>
-                                        <?php if($i == 0): foreach($allPlayers as $player): ?>
-                                            <option value="<?php print $player->getId(); ?>"
-                                            handicap="<?php print round($player->getHandicap(), 0); ?>"
-                                            ><?php print $player->getName(); ?></option>
-                                        <?php endforeach; endif; ?>
-                                    </select>
-                                </div>
                             </div>
                             <div class='cell handicap'>
                                 <input type='number' name='handicap[]' maxlength='2' size='2' min='0' max='15' step='1'
@@ -105,11 +105,7 @@ scoresheet edit form for scotch doubles
                     <div class='row'>
                         <div class='cell blank'><br /></div>
                         <div class='cell playerName'>Handicap Points</div>
-                        <div class='cell handicap'>
-                            <?php if(isset($handicapPoints)):
-                                print $handicapPoints[$key]['singles']['total'];
-                            endif; ?>
-                        </div>
+                        <div class='cell handicap'><?php print $info['handicap']; ?></div>
                     </div>
                     <div class='row totals'>
                         <div class='cell blank'><br /></div>
@@ -124,11 +120,19 @@ scoresheet edit form for scotch doubles
                         <div class='cell header'>2</div>
                     </div>
                     <?php for($i = 0; $i < 2; $i++): ?>
-                        <div class='row scores'>
+                        <div class='row scores player<?php print $i; ?>'>
                             <?php for($j = 0; $j < 2; $j++): ?>
+                                <?php 
+                                    // Determine the game number
+                                    $iGame = ($j * 2) + $i;
+                                ?>
                                 <div class='cell score'>
                                     <?php if($label == 'HOME'): ?>
-                                        <input type='number' name='score[]' maxlength='2' size='2' min='0' max='15' step='1' />
+                                        <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                            <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
+                                        />
+                                    <?php elseif(isset($info['scores'][$iGame])): ?>
+                                        <?php print $info['scores'][$iGame]; ?>
                                     <?php endif; ?>
                                 </div>
                             <?php endfor; ?>
@@ -136,14 +140,14 @@ scoresheet edit form for scotch doubles
                     <?php endfor; ?>
                     <div class='row handicaps'>
                         <?php for($i = 0; $i < 2; $i++): ?>
-                            <div class='cell handicap'>
+                            <div class='cell handicap round<?php print $i; ?>'>
+                                <?php print $info['hcpPerRound']; ?>
                             </div>
                         <?php endfor ?>
                     </div>
                     <div class='row totals'>
                         <?php for($i = 0; $i < 2; $i++): ?>
-                            <div class='cell total'>
-                            </div>
+                            <div class='cell total'><?php if(isset($info['roundTotals'][$i])) print $info['roundTotals'][$i]; ?></div>
                         <?php endfor; ?>
                     </div>
                 </div>
@@ -158,35 +162,61 @@ scoresheet edit form for scotch doubles
                         <div class='cell header'>TOT</div>
                     </div>
                     <div class='row scores'>
-                        <?php for($i = 0; $i < 5; $i++): ?>
+                        <?php for($i = 4; $i < 9; $i++): ?>
                             <div class='cell score'>
                                 <?php if($label == 'HOME'): ?>
-                                    <input type='number' name='score[]' maxlength='2' size='2' min='0' max='15' step='1' />
+                                    <input type='number' name='score[<?php print $i; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                    <?php if(isset($info['scores'][$i])) print 'value="' . $i . '"'; ?>
+                                    />
+                                <?php elseif(isset($info['scores'][$i])): ?>
+                                    <?php print $info['scores'][$i]; ?>
                                 <?php endif; ?>
                             </div>
                         <?php endfor; ?>
                         <div class='cell totalScore'>
+                            <?php print $info['totalPoints'] - $info['totalHcpPoints']; ?>
                         </div>
                     </div>
                     <div class='row handicaps'>
                         <?php for($i = 0; $i < 5; $i++): ?>
-                            <div class='cell handicap'>
-                            </div>
-                        <?php endfor; ?>
-                        <div class='cell totalHandicap'>
-                        </div>
+                            <div class='cell handicap'><?php print $info['doublesHcpPerRound']; ?></div>
+                        <?php endfor; ?> 
+                        <div class='cell totalHandicap'><?php print $info['totalHcpPoints']; ?></div>
                     </div>
                     <div class='row totals'>
-                        <?php for($i = 0; $i < 5; $i++): ?>
+                        <?php for($i = 2; $i < 7; $i++): ?>
                             <div class='cell total'>
+                                <?php if(isset($info['roundTotals'][$i])) print $info['roundTotals'][$i]; ?>
                             </div>
                         <?php endfor; ?>
                         <div class='cell total'>
+                            <?php print $info['totalPoints']; ?>
                         </div>
                     </div>
                 </div>
             </div>
         <?php $firstPlayer += 2; endforeach; ?>
     </div>
+
+    <input type='hidden' name='action' value='my5280_update_scoresheet' />
+    <input type='hidden' name='match' value="<?php print $curMatch->getId(); ?>" />
+
     <p class="submit"><input type="submit" value="Save Scores &raquo;" class="button" /></p>
 </form>
+<script type='text/javascript'>
+    function my5280_getAwayGame(homeGame)
+    {
+        switch(homeGame) {
+        case 2:
+            return 3;
+        case 3:
+            return 2;
+        default:
+            return homeGame;
+        }
+    }
+
+    jQuery(function() {
+        my5280.init();
+    });
+</script>

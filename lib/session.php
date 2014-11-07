@@ -153,6 +153,19 @@ class my5280_Session
 
 
     /**
+     * Retrieve the number of doubles games.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getDoublesGames()
+    {
+        $this->loadFormatSettings();
+        return $this->doublesGames;
+    }
+
+
+    /**
      * getLabel:    Retrieve the label portion of the session name.  This is assumed to be
      *              anything after the dash, if one exists.
      *
@@ -231,6 +244,31 @@ class my5280_Session
             }
         }
         return $name;
+    }
+
+
+    /**
+     * Retrieve the number of players per match.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getPlayerCount()
+    {
+        $this->loadFormatSettings();
+        return $this->playerCount;
+    }
+
+
+    /**
+     * Retrieve the number of player games.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getPlayerGames()
+    {
+        return $this->getPlayerCount() ^ 2;
     }
 
 
@@ -375,6 +413,25 @@ class my5280_Session
             }
         }
         return $this->teams;
+    }
+
+
+    /**
+     * Load format-specific settings.
+     *
+     * @param none
+     * @return void
+     */
+    protected function loadFormatSettings()
+    {
+        if($this->playerCount === null) {
+            // Load the functions file
+            $format = $this->getLeagueFormat();
+            require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $format . '.php');
+
+            $this->playerCount = call_user_func('my5280_getPlayerCount_' . $format);
+            $this->doublesGames = call_user_func('my5280_getDoublesGames_' . $format);
+        }
     }
 
 
@@ -792,4 +849,10 @@ class my5280_Session
      */
     protected $matches = null;
     protected $matchLookup = null;
+
+    /**
+     * Format-specific settings
+     */
+    protected $playerCount = null;
+    protected $doublesGames = null;
 }

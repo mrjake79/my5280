@@ -29,3 +29,21 @@ function my5280_getRoundNumber_8ballscotch($Game)
         return $Game - 2;
     }
 }
+
+
+/**
+ * Get the number of players per team.
+ */
+function my5280_getPlayerCount_8ballscotch()
+{
+    return 2;
+}
+
+
+/**
+ * Retrieve the number of doubles games played.
+ */
+function my5280_getDoublesGames_8ballscotch()
+{
+    return 5;
+}

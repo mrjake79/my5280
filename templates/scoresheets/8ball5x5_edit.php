@@ -97,7 +97,7 @@ scoresheet edit form for 8-Ball 5x5
                     <div class='row'>
                         <div class='cell blank'><br /></div>
                         <div class='cell'>Handicap Points</div>
-                        <div class='cell teamHandicap'><?php $info['handicap']; ?></div>
+                        <div class='cell teamHandicap'><?php print $info['handicap']; ?></div>
                     </div>
                     <div class='row totals'>
                         <div class='cell blank'><br /></div>

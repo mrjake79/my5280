@@ -19,10 +19,14 @@ class my5280_Doubles
         $names = array();
         foreach(array($Name1, $Name2) as $name) {
             // Get the player
-            $player = my5280::$instance->getPlayer($name, true);
-            $family[] = $player;
+            if($name instanceof my5280_Player) {
+                $player = $name;
+            } else {
+                $player = my5280::$instance->getPlayer($name, true);
+            }
 
             // Add the name to the list
+            $family[] = $player;
             $names[] = $player->getName();
         }
         $this->familyMembers = $family;
