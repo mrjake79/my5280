@@ -115,12 +115,16 @@ scoresheet edit form for 8-Ball 5x5
                         <div class='cell header'>5</div>
                         <div class='cell header'>TOT</div>
                     </div>
-                    <?php for($i = 0; $i < 5; $i++): $lineTotal = null; ?>
+                    <?php for($i = $firstPlayer; $i < ($firstPlayer + 5); $i++): ?>
                         <div class='row scores player<?php print $i; ?>'>
                             <?php for($j = 0; $j < 5; $j++): ?>
                                 <?php 
                                     // Determine the game number
-                                    $iGame = ($j * 5) + $i; 
+                                    if($label == 'AWAY') {
+                                        $iGame = $curMatch->getAwayGame($j, $i);
+                                    } else {
+                                        $iGame = $curMatch->getHomeGame($j, $i);
+                                    }
                                 ?>
                                     <div class="cell score game<?php print $iGame; ?>" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
@@ -133,22 +137,30 @@ scoresheet edit form for 8-Ball 5x5
                                 </div>
                             <?php endfor; ?>
                             <div class='cell totalScore'>
+                                <?php if(isset($info['playerTotals'][$i])) print $info['playerTotals'][$i]; ?>
                             </div>
                         </div>
                     <?php endfor; ?>
                     <div class='row handicaps'>
                         <div class='cell number'>HCP</div>
                         <?php for($i = 0; $i < 5; $i++): ?>
-                            <div class='cell handicap round<?php print $i; ?>'></div>
+                            <div class='cell handicap round<?php print $i; ?>'>
+                                <?php if(isset($info['roundHandicaps'][$i])) print $info['roundHandicaps'][$i]; ?>
+                            </div>
                         <?php endfor; ?>
-                        <div class='cell totalHandicap'></div>
+                        <div class='cell totalHandicap'>
+                            <?php print $info['totalHcpPoints']; ?>
+                        </div>
                     </div>
                     <div class='row totals'>
                         <div class='cell total number'>TOT</div>
                         <?php for($i = 0; $i < 5; $i++): ?>
-                            <div class='cell total round<?php print $i; ?>'></div>
+                            <div class='cell total round<?php print $i; ?>'>
+                                <?php if(isset($info['roundTotals'][$i])) print $info['roundTotals'][$i]; ?>
+                            </div>
                         <?php endfor; ?>
                         <div class='cell overallTotal'>
+                            <?php print $info['totalPoints']; ?>
                         </div>
                     </div>
                 </div>

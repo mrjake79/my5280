@@ -119,14 +119,14 @@ scoresheet edit form for scotch doubles
                         <div class='cell header'>1</div>
                         <div class='cell header'>2</div>
                     </div>
-                    <?php for($i = 0; $i < 2; $i++): ?>
-                        <div class='row scores player<?php print $i; ?>'>
-                            <?php for($j = 0; $j < 2; $j++): ?>
+                    <?php for($iPlayer = $firstPlayer; $iPlayer < ($firstPlayer + 2); $iPlayer++): ?>
+                        <div class='row scores player<?php print $iPlayer; ?>'>
+                            <?php for($iRound = 0; $iRound < 2; $iRound++): ?>
                                 <?php 
                                     // Determine the game number
-                                    $iGame = ($j * 2) + $i;
+                                    $iGame = call_user_func(array($curMatch, 'get' . $label . 'Game'), $iRound, $iPlayer);
                                 ?>
-                                <div class='cell score'>
+                                <div class='cell score game<?php print $iGame; ?>'>
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
                                             <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
@@ -139,9 +139,9 @@ scoresheet edit form for scotch doubles
                         </div>
                     <?php endfor; ?>
                     <div class='row handicaps'>
-                        <?php for($i = 0; $i < 2; $i++): ?>
-                            <div class='cell handicap round<?php print $i; ?>'>
-                                <?php print $info['hcpPerRound']; ?>
+                        <?php for($iRound = 0; $iRound < 2; $iRound++): ?>
+                            <div class='cell handicap round<?php print $iRound; ?>'>
+                                <?php print isset($roundHandicaps[$iRound]) ? ($label == 'HOME' ? $roundHandicaps[$iRound][0] : $roundHandicaps[$iRound][1]) : null; ?>
                             </div>
                         <?php endfor ?>
                     </div>
@@ -178,8 +178,10 @@ scoresheet edit form for scotch doubles
                         </div>
                     </div>
                     <div class='row handicaps'>
-                        <?php for($i = 0; $i < 5; $i++): ?>
-                            <div class='cell handicap'><?php print $info['doublesHcpPerRound']; ?></div>
+                        <?php for($iRound = 2; $iRound < 7; $iRound++): ?>
+                            <div class='cell handicap'>
+                                <?php if(isset($roundHandicaps[$iRound])) print ($label == 'HOME' ? $roundHandicaps[$iRound][0] : $roundHandicaps[$iRound][1]); ?>
+                            </div>
                         <?php endfor; ?> 
                         <div class='cell totalHandicap'><?php print $info['totalHcpPoints']; ?></div>
                     </div>

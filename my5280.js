@@ -18,14 +18,17 @@ my5280.init = function()
     });
 
     // Copy other players from the first select box
-    var allPlayers = document.getElementById('otherPlayer0').options;
-    jQuery('select.otherPlayer').each(function() {
-        if(this.id == 'otherPlayer0') return;
+    var allPlayers = document.getElementById('otherPlayer0');
+    if(allPlayers) {
+        allPlayers = allPlayers.options;
+        jQuery('select.otherPlayer').each(function() {
+            if(this.id == 'otherPlayer0') return;
 
-        for(var i = 1; i < allPlayers.length - 1; i++) {
-            this.appendChild(allPlayers[i].cloneNode(true));
-        }
-    });
+            for(var i = 1; i < allPlayers.length - 1; i++) {
+                this.appendChild(allPlayers[i].cloneNode(true));
+            }
+        });
+    }
 
     // Handle changes to form elements
     jQuery('.scoresheet input,select').change(my5280.handleChange);
@@ -71,8 +74,11 @@ my5280.handleChange = function()
         var homeGame = (homeRound * 5) + homePlayer;
 
         // Determine the away game and player
-        var awayGame = my5280_getAwayGame(homeGame);
-        var awayPlayer = (awayGame % 5) + 5;
+        var awayGame = homeGame;
+        var awayCell = jQuery('.scoresheet .AWAY .game' + awayGame)[0];
+        var awayPlayer = awayCell.parentNode.className;
+        var matches = /player(\d+)/.exec(awayPlayer);
+        awayPlayer = parseInt(matches[1]);
 
         // Determine the matching score
         if(jQuery('.scoresheet .HOME .player' + homePlayer + ' select').val() == 'NONE') {

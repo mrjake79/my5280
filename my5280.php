@@ -120,9 +120,9 @@ class my5280 //extends LeagueManager
     public function getMatch($ID)
     {
         global $leaguemanager;
-        require_once(MY5280_PLUGIN_DIR . 'lib/match.php');
         foreach($leaguemanager->getMatches('id=' . $ID) as $match) {
-            return new my5280_Match($match);
+            $session = $this->getSession($match->league_id, $match->season);
+            return $session->getMatch($match);
         }
         return null;
     }
@@ -425,12 +425,17 @@ class my5280 //extends LeagueManager
         }
 
         // Check for a specific match
-        $curMatch = null;
+        $curMatch = null; $helperMatch = null;
+        $matches = $session->listMatches(false);
         if(isset($match_id) && $match_id !== null) {
-            $matches = $session->listMatches(false);
             if(isset($matches[$match_id])) {
                 $curMatch = $matches[$match_id];
+                $helperMatch = $curMatch;
+            } else {
+                $helperMatch = array_pop($matches);
             }
+        } else {
+            $helperMatch = array_pop($matches);
         }
 
         // Get the home and away teams
@@ -438,11 +443,6 @@ class my5280 //extends LeagueManager
             // Load format-specific functionality
             $format = $session->getLeagueFormat();
             require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $format . '.php');
-
-            // Determine number of players, player games, and doubles games
-            $playerCount = call_user_func('my5280_getPlayerCount_' . $format);
-            $playerGames = $playerCount * $playerCount;
-            $doublesGames = call_user_func('my5280_getDoublesGames_' . $format);
 
             // Initialize the team array
             $teams = array();
@@ -482,6 +482,9 @@ class my5280 //extends LeagueManager
                 }
             }
 
+            // Get round handicaps
+            $roundHandicaps = $curMatch->listRoundHandicaps();
+
             // Add the home team to the list
             $teams['HOME'] = array(
                 'team' => $team,
@@ -489,10 +492,10 @@ class my5280 //extends LeagueManager
                 'selPlayers' => $curMatch->listHomePlayers(),
                 'scores' => $curMatch->listHomeScores(),
                 'handicap' => $homeHcp,
-                'doublesHandicap' => (int) $curMatch->getHomeDoublesHandicap(),
                 'hcpPerRound' => 0,
-                'doublesHcpPerRound' => 0,
                 'roundTotals' => array(),
+                'roundHandicaps' => array(),
+                'playerTotals' => array(),
                 'totalHcpPoints' => 0,
                 'totalPoints' => 0,
             );
@@ -539,44 +542,45 @@ class my5280 //extends LeagueManager
                 'selPlayers' => $curMatch->listAwayPlayers(),
                 'scores' => $curMatch->listAwayScores(),
                 'handicap' => $awayHcp,
-                'doublesHandicap' => (int) $curMatch->getAwayDoublesHandicap(),
                 'hcpPerRound' => 0,
-                'doublesHcpPerRound' => 0,
                 'roundTotals' => array(),
+                'roundHandicaps' => array(),
+                'playerTotals' => array(),
                 'totalHcpPoints' => 0,
                 'totalPoints' => 0,
             );
 
-            // Calculate singles per-round handicaps
-            if($awayHcp > $homeHcp) {
-                $teams['HOME']['hcpPerRound'] = $awayHcp - $homeHcp;
-            } else {
-                $teams['AWAY']['hcpPerRound'] = $homeHcp - $awayHcp;
-            }
-
-            // Calculate doubles handicap per-round
-            if($teams['HOME']['doublesHandicap'] > $teams['AWAY']['doublesHandicap']) {
-                $teams['AWAY']['doublesHcpPerRound'] = $teams['HOME']['doublesHandicap'] - $teams['AWAY']['doublesHandicap'];
-            } else {
-                $teams['HOME']['doublesHcpPerRound'] = $teams['AWAY']['doublesHandicap'] - $teams['HOME']['doublesHandicap'];
-            }
-
             // Process scores
             foreach(array('HOME', 'AWAY') as $key) {
                 foreach($teams[$key]['scores'] as $game => $score) {
-                    $round = call_user_func('my5280_getRoundNumber_' . $format, $game);
+                    // Calculate round totals
+                    $round = $curMatch->getRoundNumber($game);
                     if(!isset($teams[$key]['roundTotals'][$round])) {
-                        if($game < $playerGames) {
-                            $hcpPts = $teams[$key]['hcpPerRound'];
+                        // Determine handicap points for the round
+                        if(isset($roundHandicaps[$round])) {
+                            $hcpPts = $roundHandicaps[$round][ ($key == 'HOME' ? 0 : 1) ];
                         } else {
-                            $hcpPts = $teams[$key]['doublesHcpPerRound'];
+                            $hcpPts = 0;
                         }
+
+                        // Add the handicap points to the round totals, total handicap, and total points for the team
+                        $teams[$key]['roundHandicaps'][$round] = $hcpPts;
                         $teams[$key]['roundTotals'][$round] = $hcpPts;
                         $teams[$key]['totalHcpPoints'] += $hcpPts;
                         $teams[$key]['totalPoints'] += $hcpPts;
                     }
+
+                    // Calculate round totals and total points
                     $teams[$key]['roundTotals'][$round] += $score;
                     $teams[$key]['totalPoints'] += $score;
+
+                    // Calculate player totals
+                    $player = ($key == 'HOME' ? $curMatch->getHomePlayerNumber($game) : $curMatch->getAwayPlayerNumber($game));
+                    if(!isset($teams[$key]['playerTotals'][$player])) {
+                        $teams[$key]['playerTotals'][$player] = $score;
+                    } else {
+                        $teams[$key]['playerTotals'][$player] += $score;
+                    }
                 }
             }
         } else {
