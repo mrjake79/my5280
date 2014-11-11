@@ -43,8 +43,43 @@ class my5280_Doubles
      */
     public function getHandicap()
     {
+        // Get the meta data
         $this->load();
-        return $this->cnMeta['my5280_handicap_start'];
+        $meta = $this->cnMeta;
+
+        // Retrieve the starting handicap information
+        $startValue = isset($meta['my5280_handicap_start']) ? $meta['my5280_handicap_start'] : 0;
+        $startGames = isset($meta['my5280_lifetime_start']) ? $meta['my5280_lifetime_start'] : 0;
+
+        // Retrieve points and games since the beginning
+        $totalPoints = isset($meta['my5280_points']) ? $meta['my5280_points'] : 0;
+        $totalGames = isset($meta['my5280_games']) ? $meta['my5280_games'] : 0;
+
+        // Handle no total games
+        if($totalGames == 0) {
+            // Check for any previous games
+            if($startGames > 0) {
+                // This was imported from outside the system.
+                return $startValue;
+            } else {
+                // We'll use the average for the handicaps of the 2 players.  To make it easier,
+                // we average the rounded handicaps since that is all players have when they are
+                // first starting doubles.
+                foreach($this->familyMembers as $player) {
+                    $totalPoints += round($player->getHandicap(), 0);
+                }
+                return $totalPoints / 2;
+            }
+        } elseif($totalGames < 50) {
+            // We'll pull in enough games to get to 50 or the most that are available
+            $lessGames = 50 - $totalGames;
+            $availGames = min($lessGames, $startGames);
+            $totalPoints += ($startValue * $availGames);
+            $totalGames += $availGames;
+        }
+
+        # Return the average handicap
+        return $totalPoints / $totalGames;
     }
 
 
