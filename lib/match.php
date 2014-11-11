@@ -66,9 +66,7 @@ class my5280_Match
         ksort($this->data->custom['players']);
 
         // Clear the away scores and player list
-        $this->awayScores = null;
         $this->players = null;
-        $this->playerPoints = null;
 
         // Update total points (in case of handicap change)
         $this->updateTotalScores();
@@ -83,18 +81,18 @@ class my5280_Match
      */
     public function addScore($Game, $Score)
     {
+        // Get the players
+        $players = $this->listGamePlayers($Game);
+
         // Save the score
         if(!is_array($this->data->custom['scores'])) $this->data->custom['scores'] = array();
-        $this->data->custom['scores'][$Game] = $Score;
-
-        // Update the away score
-        $this->updateAwayScore($Game, $Score);
+        $this->data->custom['scores'][$Game] = array(
+            $players[0] => $Score,
+            $players[1] => $this->calculateAwayScore($Game, $Score),
+        );
 
         // Update totals
         $this->updateTotalScores();
-
-        // Clear player points
-        $this->playerPoints = null;
     }
 
 
@@ -274,10 +272,13 @@ class my5280_Match
     /**
      * Retrieve an array of players for a particular game.  The 1st player in the array
      * is the home player and the 2nd is the away player.
+     *
+     * @param none
+     * @return array
      */
     public function listGamePlayers($Game)
     {
-        return call_user_func('my5280_listGamePlayers_' . $this->format, $this, $Game);
+        return array(null, null);
     }
 
 
@@ -358,6 +359,18 @@ class my5280_Match
             }
         }
         return $players;
+    }
+
+
+    /**
+     * Retrieve an array of handicaps per round.
+     *
+     * @param none
+     * @return array
+     */
+    public function listRoundHandicaps()
+    {
+        return array();
     }
 
 
@@ -570,50 +583,9 @@ class my5280_Match
 
 
     /**
-     * Player points
-     */
-    protected $playerPoints = null;
-
-
-    /**
-     * Away team scores.
-     */
-    protected $awayScores = null;
-
-
-    /**
      * Original scores.
      */
     protected $originalScores = null;
-
-
-    /**
-     * Update an away score.
-     */
-    protected function updateAwayScore($HomeGame, $HomeScore)
-    {
-        if($this->awayScores !== null) {
-            // Get the players for the match
-            $players = $this->listPlayers();
-
-            // Determine home player
-            $homePlayer = $HomeGame % 5;
-
-            // Get the away game and player
-            $awayGame = call_user_func('my5280_getAwayGame_' . $this->format, $HomeGame);
-            $awayPlayer = ($awayGame % 5) + 5;
-
-            // Add to the scores
-            if($HomeScore === 0 && $players[$homePlayer]['id'] == null) {
-                $awayScore = 8;
-            } elseif($players[$awayPlayer]['id'] == null) {
-                $awayScore = 0;
-            } else {
-                $awayScore = 15 - $HomeScore;
-            }
-            $this->awayScores[$HomeGame] = $awayScore;
-        }
-    }
 
 
     /**
@@ -624,33 +596,11 @@ class my5280_Match
      */
     protected function updateTotalScores()
     {
-        // Get the players
-        $players = $this->listPlayers();
-        $playerCount = count($players);
-
-        $handicaps = array();
-
-        // Calculate home team handicap
-        $hcpHome = 0;
-        foreach(array_slice($players, 0, $playerCount / 2) as $player) {
-            $hcpHome += $player['handicap'];
-            $handicaps[] = $player['handicap'];
-        }
-
-        // Calculate away team handicap
-        $hcpAway = 0;
-        foreach(array_slice($players, $playerCount / 2) as $player) {
-            $hcpAway += $player['handicap'];
-            $handicaps[] = $player['handicap'];
-        }
-
-        // Determine total handicap points for each team
-        if($hcpHome > $hcpAway) {
-            $totalHome = 0;
-            $totalAway = ($hcpHome - $hcpAway) * 5;
-        } else {
-            $totalHome = ($hcpAway - $hcpHome) * 5;
-            $totalAway = 0;
+        // Determine total handicaps for each time
+        $totalHome = 0; $totalAway = 0;
+        foreach($this->listRoundHandicaps() as $handicaps) {
+            $totalHome += $handicaps[0];
+            $totalAway += $handicaps[1];
         }
 
         // Determine the total home and away points
@@ -672,37 +622,5 @@ class my5280_Match
         } else {
             return 15 - $Score;
         }
-    }
-
-
-    /**
-     * Calculate total points by player for the provide scores.
-     */
-    protected function calculateTotalPoints($Players, $Scores)
-    {
-        // Build original player scores
-        $totals = array();
-
-        // Process home team scores
-        foreach($Scores as $game => $score) {
-            $iPlayer = $game % 5;
-            if(isset($Players[$iPlayer]) && $Players[$iPlayer]['id'] != null) {
-                $player = $Players[$iPlayer]['id'];
-                if(!isset($totals[$player])) {
-                    $totals[$player] = array(
-                        'games' => 0,
-                        'points' => 0,
-                        'wins' => 0,
-                    );
-                }
-                $totals[$player]['games']++;
-                $totals[$player]['points'] += $score;
-                if($score > 7) {
-                    $totals[$player]['wins']++;
-                }
-            }
-        }
-
-        return $totals;
     }
 }

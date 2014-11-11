@@ -9,6 +9,7 @@ scoresheet edit form for 8-Ball 5x5
 <style type='text/css'>
     .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
     div.otherPlayer { display: none; }
+    div.teamRoster { width: 12em; }
 </style>
 <noscript>
     <style type='text/css'>
@@ -82,7 +83,6 @@ scoresheet edit form for 8-Ball 5x5
                                         <?php if($i == 0): foreach($allPlayers as $player): ?>
                                             <option value="<?php print $player->getId(); ?>"
                                             handicap="<?php print round($player->getHandicap(), 0); ?>"
-                                            <?php if(!$found && isset($players[$i]) && $players[$i]['id'] == $player->getId()) print 'selected="selected"'; ?>
                                             ><?php print $player->getName(); ?></option>
                                         <?php endforeach; endif; ?>
                                     </select>
@@ -98,9 +98,7 @@ scoresheet edit form for 8-Ball 5x5
                     <div class='row'>
                         <div class='cell blank'><br /></div>
                         <div class='cell'>Handicap Points</div>
-                        <div class='cell teamHandicap'>
-                            <?php print $handicapTotal > 0 ? $handicapTotal : null; ?>
-                        </div>
+                        <div class='cell teamHandicap'><?php print $info['handicap']; ?></div>
                     </div>
                     <div class='row totals'>
                         <div class='cell blank'><br /></div>
@@ -118,23 +116,21 @@ scoresheet edit form for 8-Ball 5x5
                         <div class='cell header'>5</div>
                         <div class='cell header'>TOT</div>
                     </div>
-                    <?php for($i = $firstPlayer; $i < ($firstPlayer + $numPlayers); $i++): $lineTotal = null; ?>
+                    <?php for($i = $firstPlayer; $i < ($firstPlayer + 5); $i++): ?>
                         <div class='row scores player<?php print $i; ?>'>
                             <?php for($j = 0; $j < 5; $j++): ?>
                                 <?php 
                                     // Determine the game number
-                                    $iGame = ($j * 5) + $i - $firstPlayer; 
                                     if($label == 'AWAY') {
-                                        $iGame = call_user_func('my5280_getAwayGame_' . $session->getLeagueFormat(), $iGame);
+                                        $iGame = $curMatch->getAwayGame($j, $i);
+                                    } else {
+                                        $iGame = $curMatch->getHomeGame($j, $i);
                                     }
                                 ?>
                                     <div class="cell score game<?php print $iGame; ?>" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
-                                            <?php if(isset($info['scores'][$iGame])):
-                                                print 'value="' . $info['scores'][$iGame] . '"';
-                                                $lineTotal += $info['scores'][$iGame];
-                                            endif; ?>
+                                            <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
                                         />
                                     <?php elseif(isset($info['scores'][$iGame])): ?>
                                         <?php print $info['scores'][$iGame]; ?>
@@ -142,7 +138,7 @@ scoresheet edit form for 8-Ball 5x5
                                 </div>
                             <?php endfor; ?>
                             <div class='cell totalScore'>
-                                <?php if($lineTotal !== null) print $lineTotal; ?>
+                                <?php if(isset($info['playerTotals'][$i])) print $info['playerTotals'][$i]; ?>
                             </div>
                         </div>
                     <?php endfor; ?>
@@ -150,16 +146,18 @@ scoresheet edit form for 8-Ball 5x5
                         <div class='cell number'>HCP</div>
                         <?php for($i = 0; $i < 5; $i++): ?>
                             <div class='cell handicap round<?php print $i; ?>'>
-                                <?php if(count($info['scores'])) print $info['hcpPerRound']; ?>
+                                <?php if(isset($info['roundHandicaps'][$i])) print $info['roundHandicaps'][$i]; ?>
                             </div>
                         <?php endfor; ?>
-                        <div class='cell totalHandicap'><?php if(count($info['scores'])) print $hcpTotal; ?></div>
+                        <div class='cell totalHandicap'>
+                            <?php print $info['totalHcpPoints']; ?>
+                        </div>
                     </div>
                     <div class='row totals'>
                         <div class='cell total number'>TOT</div>
                         <?php for($i = 0; $i < 5; $i++): ?>
                             <div class='cell total round<?php print $i; ?>'>
-                                <?php print $info['roundTotals'][$iRound]; ?>
+                                <?php if(isset($info['roundTotals'][$i])) print $info['roundTotals'][$i]; ?>
                             </div>
                         <?php endfor; ?>
                         <div class='cell overallTotal'>
@@ -183,9 +181,9 @@ scoresheet edit form for 8-Ball 5x5
         var iRound = Math.floor(homeGame / 5);
 
         // Calculate the away game
-        var awayGame = homeGame - iRound;
-        if(awayGame < ((iRound) * 5)) {
-            awayGame += 5;
+        var awayGame = homeGame + iRound;
+        if(awayGame >= ((iRound + 1) * 5)) {
+            awayGame -= 5;
         }
         return awayGame;
     }

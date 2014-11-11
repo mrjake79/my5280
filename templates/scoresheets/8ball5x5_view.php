@@ -86,14 +86,15 @@ scoresheet view page for 8-Ball 5x5
                     <div class='cell header'>5</div>
                     <div class='cell header'>TOT</div>
                 </div>
-                <?php for($i = 0; $i < 5; $i++): $lineTotal = null; ?>
+                <?php for($i = $firstPlayer; $i < ($firstPlayer + 5); $i++): ?>
                     <div class='row scores'>
                         <?php for($j = 0; $j < 5; $j++): ?>
                             <?php 
                                 // Determine the game number
-                                $iGame = ($j * 5) + $i;
                                 if($label == 'AWAY') {
-                                    $iGame = call_user_func('my5280_getAwayGame_' . $session->getLeagueFormat(), $iGame);
+                                    $iGame = $helperMatch->getAwayGame($j, $i);
+                                } else {
+                                    $iGame = $helperMatch->getHomeGame($j, $i);
                                 }
                                 
                                 // Determine the break
@@ -109,65 +110,37 @@ scoresheet view page for 8-Ball 5x5
                             <div class="cell score<?php if(isset($info['scores'][$iGame])) print ' played'; ?>">
                                 <?php if(isset($info['scores'][$iGame])):
                                     print $info['scores'][$iGame];
-                                    $lineTotal += $info['scores'][$iGame];
                                 else:
                                     print '<div class="matchNumber">' . ($iGame + 1) . ($break ? '<br />B' : '') . '</div>';
                                 endif; ?>
                             </div>
                         <?php endfor; ?>
                         <div class='cell totalScore'>
-                            <?php if($lineTotal !== null):
-                                print $lineTotal;
+                            <?php if(isset($info['playerTotals'][$i])):
+                                print $info['playerTotals'][$i];
                             endif; ?>
                         </div>
                     </div>
                 <?php endfor; ?>
                 <div class='row handicaps'>
                     <div class='cell number'>HCP</div>
-                    <?php $hcpTotal = 0; for($i = 0; $i < 5; $i++): $hcpTotal += $info['hcpPerRound']; ?>
-                        <div class='cell handicap'><?php if(count($info['scores'])) print $info['hcpPerRound']; ?></div>
+                    <?php for($i = 0; $i < 5; $i++): ?>
+                        <div class='cell handicap'>
+                            <?php if(count($info['scores']) && isset($info['roundHandicaps'][$i])) print $info['roundHandicaps'][$i]; ?>
+                        </div>
                     <?php endfor; ?>
-                    <div class='cell totalHandicap'><?php if(count($info['scores'])) print $hcpTotal; ?></div>
+                    <div class='cell totalHandicap'><?php if(count($info['scores'])) print $info['totalHcpPoints']; ?></div>
                 </div>
                 <div class='row totals'>
                     <div class='cell total number'>TOT</div>
                     <?php for($iRound = 0; $iRound < 5; $iRound++): ?>
-                        <div class='cell total'><?php print $info['roundTotals'][$iRound]; ?></div>
+                        <div class='cell total'>
+                            <?php if(count($info['scores']) && isset($info['roundTotals'][$iRound])) print $info['roundTotals'][$iRound]; ?>
+                        </div>
                     <?php endfor; ?>
                     <div class='cell overallTotal'><?php if(count($info['scores'])) print $info['totalPoints']; ?></div>
                 </div>
             </div>
         </div>
     <?php $firstPlayer += $numPlayers; $iTeam++; endforeach; ?>
-    <?php if($canSubmit): ?>
-        <div style='float: right;' class='startMatchLink mobile'>
-            <a href='javascript:void(0);'
-            onclick="my5280.startScoreSubmission(<?php print $curMatch->id; ?>, true); return false;">Begin Match</a>
-        </div>
-        <div id='mobileSubmit' class='mobile' style='display: none;'>
-            <?php for($i = 1; $i < 3; $i++): ?>
-                <table id='match<?php print $i; ?>' class='mobileSubmit'>
-                    <caption>Table <?php print $i; ?></caption>
-                    <tr>
-                        <th class='homePlayer'></th>
-                        <td><input type='text' id='match<?php print $i; ?>score' maxlength='2' size='2' />
-                    </tr>
-                    <tr>
-                        <th class='awayPlayer'></th>
-                        <td></td>
-                    </tr>
-                </table>
-                <div class='mobileSubmitLink'>
-                    <div class='back'>
-                        <a href="javascript:void(0);"
-                            onclick="my5280.displayPrevGame(<?php print $i; ?>); return false;">&lt;&lt; Prev</a>
-                    </div>
-                    <div class='next'>
-                        <a href="javascript:void(0);"
-                            onclick="my5280.displayNextGame(<?php print $i; ?>); return false;">Next &gt;&gt;</a>
-                    </div>
-                </div>
-            <?php endfor; ?>
-        </div>
-    <?php endif; ?>
 </div>

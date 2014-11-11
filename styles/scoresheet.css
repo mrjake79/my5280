@@ -92,7 +92,6 @@
 
 .scoresheet .teamRoster {
     border: solid 1px;
-    width: 12em;
     margin-top: 0;
 }
 
@@ -109,12 +108,23 @@
     height: auto;
 }
 
-.singlesHandicaps, .doublesHandicaps {
+.singlesHandicaps, .doublesHandicaps, .activeDoublesHandicap {
     display: inline-table;
     margin-right: 1em;
+    float: left;
+    width: auto;
 }
 
-.singlesHandicaps .caption, .doublesHandicaps .caption {
+.activeDoublesHandicap .row {
+    display: table-row;
+}
+
+.activeDoublesHandicap .cell {
+    display: table-cell;
+    text-align: center;
+}
+
+.singlesHandicaps .caption, .doublesHandicaps .caption, .activeDoublesHandicap {
     font-weight: bold;
     display: table-caption;
     text-align: left;
