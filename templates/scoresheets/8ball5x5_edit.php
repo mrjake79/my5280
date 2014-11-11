@@ -9,6 +9,7 @@ scoresheet edit form for 8-Ball 5x5
 <style type='text/css'>
     .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
     div.otherPlayer { display: none; }
+    div.teamRoster { width: 12em; }
 </style>
 <noscript>
     <style type='text/css'>

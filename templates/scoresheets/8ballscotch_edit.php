@@ -126,7 +126,7 @@ scoresheet edit form for scotch doubles
                                     // Determine the game number
                                     $iGame = call_user_func(array($curMatch, 'get' . $label . 'Game'), $iRound, $iPlayer);
                                 ?>
-                                <div class='cell score game<?php print $iGame; ?>'>
+                                <div class='cell score game<?php print $iGame; ?>' player="<?php print $iPlayer; ?>" round="<?php print $iRound; ?>">
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
                                             <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
@@ -161,12 +161,12 @@ scoresheet edit form for scotch doubles
                         <div class='cell header'>7</div>
                         <div class='cell header'>TOT</div>
                     </div>
-                    <div class='row scores'>
+                    <div class='row scores player<?php print $label == 'HOME' ? 4 : 5; ?>'>
                         <?php for($i = 4; $i < 9; $i++): ?>
-                            <div class='cell score'>
+                            <div class='cell score game<?php print $i; ?>'>
                                 <?php if($label == 'HOME'): ?>
                                     <input type='number' name='score[<?php print $i; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
-                                    <?php if(isset($info['scores'][$i])) print 'value="' . $i . '"'; ?>
+                                    <?php if(isset($info['scores'][$i])) print 'value="' . $info['scores'][$i] . '"'; ?>
                                     />
                                 <?php elseif(isset($info['scores'][$i])): ?>
                                     <?php print $info['scores'][$i]; ?>

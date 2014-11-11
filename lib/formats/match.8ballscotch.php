@@ -25,7 +25,7 @@ class my5280_Match_8BallScotch extends my5280_Match
         if(!isset($players[3]) || $players[3]['id'] == null) return null;
 
         // Get the doubles for the players
-        $doubles = my5282::$instance->getDoubles($players[2]['id'], $players[3]['id']);
+        $doubles = my5280::$instance->getDoubles($players[2]['id'], $players[3]['id']);
         return round($doubles->getHandicap(), 0);
     }
 
@@ -47,6 +47,26 @@ class my5280_Match_8BallScotch extends my5280_Match
             return 2;
         default:
             return $homeGame;
+        }
+    }
+
+
+    /**
+     * Retrieve the away player number for a game.
+     *
+     * @param int Game number.
+     * @return int Player number.
+     */
+    public function getAwayPlayerNumber($Game)
+    {
+        if($Game < 2) {
+            return $Game + 2;
+        } elseif($Game == 2) {
+            return 3;
+        } elseif($Game == 3) {
+            return 2;
+        } else {
+            return 5;
         }
     }
 
@@ -85,6 +105,38 @@ class my5280_Match_8BallScotch extends my5280_Match
     public function getHomeGame($Round, $Player)
     {
         return ($Round * 2) + $Player;
+    }
+
+
+    /**
+     * Calculate the home player number for a game.
+     *
+     * @param int Game number.
+     * @param int Player number.
+     */
+    public function getHomePlayerNumber($Game)
+    {
+        if($Game < 4) {
+            return $Game % 2;
+        } else {
+            return 4;
+        }
+    }
+
+
+    /**
+     * Get the round number for a game.
+     *
+     * @param int The game number.
+     * @return int The round number.
+     */
+    public function getRoundNumber($Game)
+    {
+        if($Game < 4) {
+            return floor($Game / 2);
+        } else {
+            return $Game - 2;
+        }
     }
 
 

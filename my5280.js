@@ -71,11 +71,14 @@ my5280.handleChange = function()
         // Determine the home game
         var homeRound = parseInt(this.parentNode.getAttribute('round'));
         var homePlayer = parseInt(this.parentNode.getAttribute('player'));
-        var homeGame = (homeRound * 5) + homePlayer;
+        var homeGame = /game(\d+)/.exec(this.parentNode.className);
+        homeGame = parseInt(homeGame[1]);
 
         // Determine the away game and player
         var awayGame = homeGame;
-        var awayCell = jQuery('.scoresheet .AWAY .game' + awayGame)[0];
+        var awayCell = jQuery('.scoresheet .AWAY .game' + awayGame);
+        if(awayCell.length == 0) return;
+        else awayCell = awayCell[0];
         var awayPlayer = awayCell.parentNode.className;
         var matches = /player(\d+)/.exec(awayPlayer);
         awayPlayer = parseInt(matches[1]);

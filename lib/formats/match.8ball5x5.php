@@ -62,7 +62,7 @@ class my5280_Match_8ball5x5 extends my5280_Match
      * Calculate the home player number for a game.
      *
      * @param int Game number.
-     * @param int Round number.
+     * @param int Player number.
      */
     public function getHomePlayerNumber($Game)
     {

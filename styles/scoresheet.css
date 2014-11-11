@@ -92,7 +92,6 @@
 
 .scoresheet .teamRoster {
     border: solid 1px;
-    width: 12em;
     margin-top: 0;
 }
 
@@ -113,6 +112,7 @@
     display: inline-table;
     margin-right: 1em;
     float: left;
+    width: auto;
 }
 
 .activeDoublesHandicap .row {
