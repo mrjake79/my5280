@@ -25,6 +25,7 @@ $firstWeek = array_shift(array_keys($dates));
         <a href="javascript:void(0);" onclick="jQuery('.pastWeeks').removeClass('pastWeeks'); jQuery(this.parentNode).hide();">Show Past Week(s)</a>
     </div>
 <?php endif; ?>
+<br style='clear: left;' class='clearFloats' />
 <div class="schedule">
     <?php foreach($dates as $date => $data):
         $class = 'week';
@@ -52,7 +53,7 @@ $firstWeek = array_shift(array_keys($dates));
                     </div>
                 </div>
                 <?php for($iBlank = 0; $iBlank < ($maxMatches - 1); $iBlank++): ?>
-                    <div class='noMatchContainer'><br /></div>
+                    <div class='noMatchContainer blank'><br /></div>
                 <?php endfor; ?>
 			<?php else: ?>
                     <?php foreach($data['matches'] as $match): ?>
@@ -63,19 +64,19 @@ $firstWeek = array_shift(array_keys($dates));
                                         <a href="<?php print $scoresheet_url; ?>?match=<?php print $match->getId(); ?>">
                                     <?php endif; ?>
                                     <?php print $match->getHomeTeam()->getName(); ?>
-                                    <?php if($match->getHomeScore() > 0 || $match->getAwayScore() > 0):
-                                        print ': ' . $match->getHomeScore();
-                                    endif; ?>
                                     <br />
                                     <small>vs.</small> 
                                     <?php print $match->getAwayTeam()->getName(); ?>
-                                    <?php if($match->getHomeScore() > 0 || $match->getAwayScore() > 0):
-                                        print ': ' . $match->getAwayScore();
-                                    endif; ?>
                                     <?php if($scoresheet_url) print '</a>'; ?>
                                 </div>
                                 <div class='location matchPart'>
-                                    <?php print '@ ' . htmlentities(ucwords($match->getLocation())); ?>
+                                    <?php 
+                                        if($match->getHomeScore() > 0 || $match->getAwayScore() > 0):
+                                            print $match->getHomeScore() . '-' . $match->getAwayScore() . ' (final)';
+                                        else:
+                                            print '@ ' . htmlentities(ucwords($match->getLocation())); 
+                                        endif;
+                                    ?>
                                 </div>
                             </div>
                         </div>

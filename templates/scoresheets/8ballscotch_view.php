@@ -16,19 +16,19 @@ scoresheet view form for scotch doubles
             <div class='date'><?php print date('n/j/Y', strtotime($curMatch->getDate())); ?></div>
         <?php endif; ?>
     </div>
-    <?php foreach($teams as $label => $team): ?>
+    <?php foreach($teams as $label => $info): ?>
         <div class='teamSection view'>
             <div class='teamName'>
                 <?php print $label; ?> TEAM:
-                <?php if($team): ?>
-                    <div class='teamNameValue'><?php print $team->title; ?></div>
+                <?php if($info): ?>
+                    <div class='teamNameValue'><?php print $info['team']->getName(); ?></div>
                 <?php endif; ?>
             </div>
-            <?php if($team): ?>
+            <?php if($info): ?>
             <div class='teamRoster'>
                 <div class='singlesHandicaps'>
                     <div class='caption'>Singles Handicaps</div>
-                    <?php foreach($team->listPlayers() as $player): ?>
+                    <?php foreach($info['team']->listPlayers() as $player): ?>
                         <div class='player'>
                             <div>
                                 <?php print htmlentities($player->getName()); ?>: 
@@ -39,7 +39,7 @@ scoresheet view form for scotch doubles
                 </div>
                 <div class='doublesHandicaps'>
                     <div class='caption'>Doubles Handicaps</div>
-                    <?php foreach($team->listDoubles() as $double): ?>
+                    <?php foreach($info['team']->listDoubles() as $double): ?>
                         <div class='doubles'>
                             <div>
                                 <?php print htmlentities($double->getName()); ?>:
@@ -48,6 +48,7 @@ scoresheet view form for scotch doubles
                         </div>
                     <?php endforeach; ?>
                 </div>
+                <br clear='all' />
             </div>
             <?php endif; ?>
             <div class='table teamPlayers'>

@@ -1,6 +1,8 @@
 .schedule { 
     display: table; 
     border-collapse: collapse;
+    margin: 0;
+    width: auto;
 }
 
 .schedule .week { 
@@ -10,7 +12,7 @@
     display: table-cell; 
     padding: 2px;
     border-bottom: solid 1px;
-    width: 5%;
+    width: 6em;
 }
 .schedule .header { 
     text-align: center;
@@ -19,8 +21,6 @@
     display: table-cell; 
     padding: 2px;
     border-bottom: solid 1px;
-    white-space: nowrap;
-    width: 10%;
 }
 .schedule .location {
     font-size: smaller;
@@ -30,4 +30,58 @@
 }
 .schedule .date {
     font-size: smaller;
+}
+
+@media only screen and (max-device-width: 480px) {
+    .schedule {
+        display: block;
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .schedule week {
+        display: block;
+    }
+
+    .schedule .headerContainer {
+        display: table;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .schedule .header {
+        display: table-cell;
+        padding: 2px;
+        border-bottom: solid 1px;
+        font-weight: bold;
+        font-size: inherit;
+    }
+
+    .schedule .headerPart {
+        display: inline;
+        font-size: inherit;
+    }
+    .schedule .header .weekNumber {
+        float: left;
+    }
+    .schedule .header .date {
+        float: right;
+    }
+    .schedule .matchContainer, .schedule .noMatchContainer {
+        display: table;
+        width: 100%;
+    }
+    .schedule .noMatchContainer.blank {
+        display: none;
+    }
+    .schedule .match { 
+        display: table-row;
+        border-bottom: solid 1px;
+        white-space: normal;
+    }
+    .schedule .matchPart {
+        display: table-cell;
+        width: 50%;
+        padding: 1px 4px;
+    }
 }
