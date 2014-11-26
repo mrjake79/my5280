@@ -140,7 +140,10 @@ class my5280 //extends LeagueManager
     {
         require_once(MY5280_PLUGIN_DIR . 'lib/doubles.php');
         $doubles = new my5280_Doubles($First, $Second);
-        if($doubles->getId() === null && !$Create) return null;
+        if($doubles->getId() === null) {
+            if(!$Create) return null;
+            $doubles->save();
+        }
         return $doubles;
     }
 
