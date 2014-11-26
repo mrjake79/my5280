@@ -218,8 +218,11 @@ class my5280_Doubles
             if(count($ret) == 1) {
                 $this->cnData = $ret[0];
                 $this->cnMeta = array();
-                foreach(cnMeta::get('entry', $this->cnData->id) as $meta) {
-                    $this->cnMeta[$meta['meta_key']] = $meta['meta_value'];
+                $allMeta = cnMeta::get('entry', $this->cnData->id);
+                if(is_array($allMeta)) {
+                    foreach($allMeta as $meta) {
+                        $this->cnMeta[$meta['meta_key']] = $meta['meta_value'];
+                    }
                 }
             } else {
                 $this->cnData = new StdClass;

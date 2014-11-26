@@ -83,6 +83,18 @@ class my5280_Team
 
 
     /**
+     * Retrieve the ID for the league.
+     *
+     * @param none
+     * @return integer
+     */
+    public function getLeagueId()
+    {
+        return $this->info->league_id;
+    }
+
+
+    /**
      * Retrieve the location for the team.
      *
      * @param none
@@ -102,7 +114,13 @@ class my5280_Team
      */
     public function getMatchesPlayed()
     {
-        return $this->info->done_matches;
+        $count = 0;
+        foreach($this->listMatches() as $match) {
+            if(($match->getHomeScore() + $match->getAwayScore()) > 0) {
+                $count++;
+            }
+        }
+        return $count;
     }
 
 
@@ -127,6 +145,30 @@ class my5280_Team
     public function getRank()
     {
         return $this->info->rank;
+    }
+
+
+    /**
+     * Retrieve the season name.
+     *
+     * @param none
+     * @return string
+     */
+    public function getSeason()
+    {
+        return $this->info->season;
+    }
+
+
+    /**
+     * Retrieve the associated session.
+     *
+     * @param none
+     * @return object The session object.
+     */
+    public function getSession()
+    {
+        return my5280::$instance->getSession($this->info->league_id, $this->info->season);
     }
 
 
@@ -176,6 +218,28 @@ class my5280_Team
             }
         }
         return $this->doubles;
+    }
+
+
+    /**
+     * Retrieve an array of matches for the team.
+     */
+    public function listMatches()
+    {
+        global $leaguemanager;
+
+        // Get the session
+        $session = $this->getSession();
+
+        // Build the filter
+        $id = $this->getId();
+        $filter = "league_id = {$this->getLeagueId()} and season = '{$this->getSeason()}' and (home_team = {$id} or away_team = {$id})";
+
+        $matches = array();
+        foreach($leaguemanager->getMatches($filter) as $match) {
+            $matches[] = $session->getMatch($match);
+        }
+        return $matches;
     }
 
 
