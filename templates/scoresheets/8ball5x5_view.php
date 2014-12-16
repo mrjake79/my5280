@@ -9,7 +9,6 @@ scoresheet view page for 8-Ball 5x5
 <style type='text/css'>
     .scoresheet .score { vertical-align: bottom; }
     .scoresheet .score.played { vertical-align: middle; }
-    .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
 </style>
 <h2 class='subtitle'><?php print $title; ?></h2>
 <br style='clear: left;' />

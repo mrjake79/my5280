@@ -82,7 +82,7 @@
                 <?php } ?>
 
             </td>
-            <td><input type="text" name="location[<?php echo $i ?>]" id="location[<?php echo $i ?>]" size="20" value="<?php if(isset($matches[$i]->location)) echo $matches[$i]->location ?>" size="30" /></td>
+            <td><input type="text" name="location[<?php echo $i ?>]" id="location[<?php echo $i ?>]" size="20" value="<?php if(isset($matches[$i]->location)) echo stripslashes($matches[$i]->location) ?>" size="30" /></td>
             <td>
                 <select size="1" name="begin_hour[<?php echo $i ?>]">
                 <?php for ( $hour = 0; $hour <= 23; $hour++ ) : ?>
