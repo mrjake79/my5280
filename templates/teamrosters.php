@@ -15,7 +15,7 @@ usort($teams, function($a, $b) {
             <caption><?php print $team->title; ?></caption>
             <?php foreach($team->listPlayers() as $player): ?>
                 <tr>
-                    <th><?php print $player->getName(); ?></th>
+                    <td><?php print $player->getName(); ?></td>
                     <td><?php print round($player->getHandicap(), 0); ?></td>
                 </tr>
             <?php endforeach; ?>
