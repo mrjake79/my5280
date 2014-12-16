@@ -59,12 +59,11 @@ $firstWeek = array_shift(array_keys($dates));
                     <?php foreach($data['matches'] as $match): ?>
                         <div class='matchContainer'>
                             <div class='match'>
-                                <div class='matchpart'>
+                                <div class='matchPart'>
                                     <?php if($scoresheet_url): ?>
                                         <a href="<?php print $scoresheet_url; ?>?match=<?php print $match->getId(); ?>">
                                     <?php endif; ?>
                                     <?php print $match->getHomeTeam()->getName(); ?>
-                                    <br />
                                     <small>vs.</small> 
                                     <?php print $match->getAwayTeam()->getName(); ?>
                                     <?php if($scoresheet_url) print '</a>'; ?>
