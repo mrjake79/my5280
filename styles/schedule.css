@@ -32,21 +32,24 @@
     font-size: smaller;
 }
 
-@media only screen and (max-device-width: 480px) {
+@media only screen and (max-width: 480px) {
     .schedule {
         display: block;
         width: 100%;
         margin-right: 0;
     }
 
-    .schedule week {
+    .schedule .week {
         display: block;
     }
 
     .schedule .headerContainer {
         display: table;
         width: 100%;
-        margin-top: 10px;
+        background-color: rgba(255, 255, 255, 0.25);
+    }
+    .schedule .headerContainer .header {
+        padding-top: 10px;
     }
 
     .schedule .header {
@@ -61,15 +64,21 @@
         display: inline;
         font-size: inherit;
     }
-    .schedule .header .weekNumber {
-        float: left;
+    .schedule .header .weekNumber:after {
+        content: "-";
+        /* float: left; */
     }
     .schedule .header .date {
-        float: right;
+        /* float: right; */
     }
     .schedule .matchContainer, .schedule .noMatchContainer {
         display: table;
         width: 100%;
+    }
+    .schedule .noMatchContainer {
+        text-align: center;
+        font-size: 11pt;
+        font-style: italic;
     }
     .schedule .noMatchContainer.blank {
         display: none;
@@ -82,6 +91,17 @@
     .schedule .matchPart {
         display: table-cell;
         width: 50%;
-        padding: 1px 4px;
+        padding: 4px;
     }
+    .schedule .matchPart.location {
+        width: 25%;
+    }
+}
+
+.schedule .pastWeeks {
+    display: none;
+}
+
+.schedule .nextWeek {
+    border: solid yellow 2px;
 }
