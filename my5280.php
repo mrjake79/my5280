@@ -657,25 +657,49 @@ class my5280 //extends LeagueManager
         });
 
         // Calculate player information
-        $players = array();
+        $players = array(); $doubles = array();
         foreach($session->listMatches(true) as $match) {
             foreach($match->listPlayerPoints() as $playerId => $points) {
-                if(!isset($players[$playerId])) {
+                if(!isset($players[$playerId]) && !isset($doubles[$playerId])) {
                     $player = my5280::$instance->getPlayer($playerId);
-                    $players[$playerId] = $points;
-                    $players[$playerId]['id'] = $playerId;
-                    $players[$playerId]['name'] = $player->getName();
-                } else {
+                    if($player->getType() != 'family') {
+                        $players[$playerId] = $points;
+                        $players[$playerId]['id'] = $playerId;
+                        $players[$playerId]['name'] = $player->getName();
+                        $players[$playerId]['win%'] = round($players[$playerId]['wins'] / $players[$playerId]['games'] * 100, 2);
+                    } else {
+                        $doubles[$playerId] = $points;
+                        $doubles[$playerId]['id'] = $playerId;
+                        $doubles[$playerId]['name'] = $player->getName();
+                        $doubles[$playerId]['win%'] = round($doubles[$playerId]['wins'] / $doubles[$playerId]['games'] * 100, 2);
+                    }
+                } elseif(isset($players[$playerId])) {
                     $players[$playerId]['games'] += $points['games'];
                     $players[$playerId]['points'] += $points['points'];
                     $players[$playerId]['wins'] += $points['wins'];
+                    $players[$playerId]['win%'] = round($players[$playerId]['wins'] / $players[$playerId]['games'] * 100, 2);
+                } else {
+                    $doubles[$playerId]['games'] += $points['games'];
+                    $doubles[$playerId]['points'] += $points['points'];
+                    $doubles[$playerId]['wins'] += $points['wins'];
+                    $doubles[$playerId]['win%'] = round($doubles[$playerId]['wins'] / $doubles[$playerId]['games'] * 100, 2);
                 }
-                $players[$playerId]['win%'] = round($players[$playerId]['wins'] / $players[$playerId]['games'] * 100, 2);
             }
         }
 
         // Sort players on win %
         uasort($players, function($a, $b) {
+            if($a['win%'] > $b['win%']) {
+                return -1;
+            } elseif($a['win%'] < $b['win%']) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+
+        // Sort doubles on win %
+        uasort($doubles, function($a, $b) {
             if($a['win%'] > $b['win%']) {
                 return -1;
             } elseif($a['win%'] < $b['win%']) {

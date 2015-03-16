@@ -254,7 +254,10 @@ class my5280_Team
                 include_once(dirname(__FILE__) . '/player.php');
                 foreach($this->info->players as $id) {
                     if($id !== 'NONE') {
-                        $this->players[$id] = my5280::$instance->getPlayer($id);
+                        $player = my5280::$instance->getPlayer($id);
+                        if($player) {
+                            $this->players[$id] = $player;
+                        }
                     }
                 }
                 uasort($this->players, function($a, $b) {

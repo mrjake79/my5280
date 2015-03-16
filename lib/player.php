@@ -156,6 +156,17 @@ class my5280_Player
 
 
     /**
+     * Retrieve the type of player:
+     *   "individual":  A regular player (single person).
+     *   "family":      A doubles pairing.
+     */
+    public function getType()
+    {
+        return $this->entry->getEntryType();
+    }
+
+
+    /**
      * Save the player.
      */
 

@@ -148,7 +148,7 @@ class my5280_Session
             $date = $match->getDate();
             if($date >= $today) $future[$date] = $date;
         }
-        return min($future);
+        return count($future) ? min($future) : null;
     }
 
 
