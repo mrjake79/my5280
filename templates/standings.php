@@ -13,11 +13,10 @@ The following variables are usable:
 <h2 class='subtitle'>Team Standings</h2>
 <table border="0" cellpadding="0" cellspacing="0" class="my5280-standings">
     <tr>
-        <th class='header cell rank'>Place</th>
+        <th class='header cell'>#</th>
         <th class='header cell nameCell'>Team</th>
-        <th class='header cell stat'>Pts</th>
-        <th class='header cell stat'>Wks</th>
-        <th class='header cell stat'>Avg</th>
+        <th class='header cell'>Pts</th>
+        <th class='header cell'>Avg</th>
     </tr>
     <?php foreach($teams as $team): ?>
         <?php 
@@ -25,13 +24,15 @@ The following variables are usable:
             $weeks = count($team->stats['matches']);
         ?>
         <tr>
-            <td class='cell rank'><?php print $team->getRank(); ?></td>
+            <td class='cell'><?php print $team->getRank(); ?></td>
             <td class='cell nameCell'>
                 <a href="?team=<?php print$team->getId() ?>"><?php print $team->getName(); ?></a>
             </td>
-            <td class='cell stat'><?php print $team->getTotalPoints(); ?></td>
-            <td class='cell stat'><?php print $team->getMatchesPlayed(); ?></td>
-            <td class='cell stat'>
+            <td class='cell'>
+                <?php print $team->getTotalPoints(); ?> /
+                <?php print $team->getMatchesPlayed(); ?>
+            </td>
+            <td class='cell'>
                 <?php if($team->getMatchesPlayed() > 0) print round($team->getTotalPoints() / $team->getMatchesPlayed(), 2); ?>
             </td>
         </tr>
@@ -42,7 +43,7 @@ The following variables are usable:
     <table border="0" cellpadding="0" cellspacing="0" class="my5280-standings">
         <caption>Player Standings</caption>
         <tr>
-            <th class='header cell'>Place</th>
+            <th class='header cell'>#</th>
             <th class='header cell nameCell'>Player</th>
             <th class='header cell'>Wins</th>
             <th class='header cell'>Win %</th>

@@ -60,6 +60,7 @@
 .scoresheet .teamSection {
     margin-top: 2em;
     white-space: nowrap;
+    width: 650px;
 }
 
 .scoresheet .teamName {
@@ -93,6 +94,11 @@
 .scoresheet .teamRoster {
     border: solid 1px;
     margin-top: 0;
+    width: 123px;
+}
+
+.my8ballscotch .teamRoster {
+    width: auto !important;
 }
 
 .scoresheet .teamRoster .playerName { 
@@ -138,3 +144,23 @@
 .singleHandicaps .player div, .doublesHandicaps .doubles div {
     display: table-cell;
 }
+
+@media (max-width: 642px) {
+    /*
+    .table.teamPlayers, .table.rounds {
+        display: none;
+    }
+
+    .table.teamRoster {
+        width: 100%;
+    }
+
+    .teamSection {
+        display: inline-block;
+        float: left;
+        padding-right: 10px;
+    }
+    */
+}
+    
+.matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
