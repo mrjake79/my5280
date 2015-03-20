@@ -10,40 +10,36 @@ The following variables are usable:
 
 */
 ?>
-<h2 class='subtitle'>
-    <?php print htmlentities($league->title); ?>
-    <div style='font-size: smaller;'><?php print htmlentities($session->getLabel()); ?></div>
-</h2>
-    <br />
-    <table border="0" cellpadding="0" cellspacing="0" class="standings">
-        <caption>Team Standings</caption>
+<h2 class='subtitle'>Team Standings</h2>
+<table border="0" cellpadding="0" cellspacing="0" class="my5280-standings">
+    <tr>
+        <th class='header cell rank'>Place</th>
+        <th class='header cell nameCell'>Team</th>
+        <th class='header cell stat'>Pts</th>
+        <th class='header cell stat'>Wks</th>
+        <th class='header cell stat'>Avg</th>
+    </tr>
+    <?php foreach($teams as $team): ?>
+        <?php 
+            if($team->title == 'BYE') continue; 
+            $weeks = count($team->stats['matches']);
+        ?>
         <tr>
-            <th class='header cell'>Place</th>
-            <th class='header cell nameCell'>Team</th>
-            <th class='header cell'>Points</th>
-            <th class='header cell'>Weeks</th>
-            <th class='header cell'>Avg</th>
+            <td class='cell rank'><?php print $team->getRank(); ?></td>
+            <td class='cell nameCell'>
+                <a href="?team=<?php print$team->getId() ?>"><?php print $team->getName(); ?></a>
+            </td>
+            <td class='cell stat'><?php print $team->getTotalPoints(); ?></td>
+            <td class='cell stat'><?php print $team->getMatchesPlayed(); ?></td>
+            <td class='cell stat'>
+                <?php if($team->getMatchesPlayed() > 0) print round($team->getTotalPoints() / $team->getMatchesPlayed(), 2); ?>
+            </td>
         </tr>
-        <?php foreach($teams as $team): ?>
-            <?php 
-                if($team->title == 'BYE') continue; 
-                $weeks = count($team->stats['matches']);
-            ?>
-            <tr>
-                <td class='cell'><?php print $team->getRank(); ?></td>
-                <td class='cell nameCell'>
-                    <a href="?team=<?php print$team->getId() ?>"><?php print $team->getName(); ?></a>
-                </td>
-                <td class='cell'><?php print $team->getTotalPoints(); ?></td>
-                <td class='cell'><?php print $team->getMatchesPlayed(); ?></td>
-                <td class='cell'>
-                    <?php if($team->getMatchesPlayed() > 0) print round($team->getTotalPoints() / $team->getMatchesPlayed(), 2); ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-    </table>
+    <?php endforeach; ?>
+</table>
+<?php if(isset($players)): ?>
     <br />
-    <table border="0" cellpadding="0" cellspacing="0" class="standings">
+    <table border="0" cellpadding="0" cellspacing="0" class="my5280-standings">
         <caption>Player Standings</caption>
         <tr>
             <th class='header cell'>Place</th>
@@ -74,3 +70,18 @@ The following variables are usable:
             </tr>
         <?php endforeach; ?>
     </table>
+<?php endif; ?>
+<?php if(count($seasons) > 1): ?>
+    <div class="screen-only">
+        <h2>Other Sessions</h2>
+        <p class='instructions'>You can view standings from a previous session.  Select the session in this box and click "Switch" to see the past.</p>
+        <form method='get'>
+            <select name="season">
+                <?php foreach($seasons as $id => $name): ?>
+                    <option value="<?php print htmlentities($id); ?>" <?php if($id == $season) print 'selected="selected"'; ?>><?php print htmlentities($name); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <input type='submit' value="Switch" />
+        </form>
+    </div>
+<?php endif; ?>

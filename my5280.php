@@ -85,6 +85,7 @@ class my5280 //extends LeagueManager
         add_shortcode('my5280_standings', array($this, 'showStandings'));
         add_shortcode('my5280_rosters', array($this, 'showRosters'));
         add_shortcode('my5280_scoresheet', array($this, 'showScoresheet'));
+        add_shortcode('my5280_league', array($this, 'showLeague'));
 
         if(is_admin()) {
             $this->adminPanel = new my5280AdminPanel();
@@ -112,23 +113,6 @@ class my5280 //extends LeagueManager
 
 
     /**
-     * Retrieve a match.
-     *
-     * @param integer Match ID.
-     * @return object my5280_Match object
-     */
-    public function getMatch($ID)
-    {
-        global $leaguemanager;
-        foreach($leaguemanager->getMatches('id=' . $ID) as $match) {
-            $session = $this->getSession($match->league_id, $match->season);
-            return $session->getMatch($match);
-        }
-        return null;
-    }
-
-
-    /**
      * Retrieve a doubles team.
      *
      * @param mixed First player's name or ID for doubles team.
@@ -145,6 +129,23 @@ class my5280 //extends LeagueManager
             $doubles->save();
         }
         return $doubles;
+    }
+
+
+    /**
+     * Retrieve a match.
+     *
+     * @param integer Match ID.
+     * @return object my5280_Match object
+     */
+    public function getMatch($ID)
+    {
+        global $leaguemanager;
+        foreach($leaguemanager->getMatches('id=' . $ID) as $match) {
+            $session = $this->getSession($match->league_id, $match->season);
+            return $session->getMatch($match);
+        }
+        return null;
     }
 
 
@@ -299,6 +300,54 @@ class my5280 //extends LeagueManager
     {
         $sports['5280pool'] = __('5280 Pool League (BCA)', 'my5280');
         return $sports;
+    }
+
+
+    /**
+     * Shows a league information page.  The default page includes
+     * standings, upcoming matches, and news for the league.  Links
+     * are also included to quickly jump to more detailed views.
+     */
+    public function showLeague($atts, $widget = false)
+    {
+        extract(shortcode_atts(array(
+            'id' => 0,
+            'season' => false,
+        ), $atts));
+
+        // Handle subpage requests
+        if(isset($_GET['subpage'])) {
+            switch($_GET['subpage']) {
+            case 'schedule':
+                return $this->showSchedule(array('league_id' => $id));
+            }
+        }
+
+        // Determine the session, current week's matches, and the current standings
+        $dates = array();
+        $session = my5280::$instance->getSession($id, $season);
+        $currentWeek = $session->getCurrentWeek();
+        if($currentWeek) {
+            $dates[$currentWeek] = array(
+                'matches' => array_values($session->listMatches(false, $currentWeek)),
+            );
+        }
+
+        $teams = $session->listTeams();
+        uasort($teams, function($a, $b) {
+            $a = $a->getRank();
+            $b = $b->getRank();
+            if($a < $b) {
+                return -1;
+            } elseif($b < $a) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+
+        // Display the parts of the page wrapped in a div
+        include(MY5280_PLUGIN_DIR . '/templates/league.php');
     }
 
 
@@ -640,10 +689,31 @@ class my5280 //extends LeagueManager
             'season' => false,
         ), $atts ));
 
-        // Get the league, session, and teams
+        // Get the league
         $league = $leaguemanager->getLeague($league_id);
+
+        // Allow season as an argument
+        if(isset($_GET['season']) && isset($league->seasons[$_GET['season']])) {
+            $season = $_GET['season'];
+        }
+
+        // Get the league, session, and teams
         $session = new my5280_Session($league_id, $season);
         $teams = $session->listTeams();
+
+        // Build the season list
+        $seasons = array();
+        $seasonIds = array_keys($league->seasons);
+        rsort($seasonIds);
+        foreach($seasonIds as $id) {
+            $split = strpos($id, '-');
+            if($split !== false) {
+                $name = substr($id, $split + 1);
+            } else {
+                $name = $id;
+            }
+            $seasons[$id] = $name;
+        }
 
         // Sort the teams on total points
         uasort($teams, function($a, $b) {
