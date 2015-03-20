@@ -18,7 +18,7 @@ scoresheet edit form for scotch doubles
         <h2 class='subtitle'><?php print $title; ?></h2>
         <br />
     <?php endif; ?>
-    <div class="scoresheet 8ballscotch">
+    <div class="scoresheet my8ballscotch">
         <div class='dateBox'>
             Date:
             <?php if($curMatch): ?>

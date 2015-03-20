@@ -214,6 +214,8 @@ class my5280_Doubles
             $cnRetrieve = $connections->retrieve;
             $ret = $cnRetrieve->entries(array(
                 'family_name' => $this->familyName,
+                'allow_public_override' => true,
+                'private_override' => true,
             ));
             if(count($ret) == 1) {
                 $this->cnData = $ret[0];

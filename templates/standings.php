@@ -18,10 +18,9 @@ The following variables are usable:
     <table border="0" cellpadding="0" cellspacing="0" class="standings">
         <caption>Team Standings</caption>
         <tr>
-            <th class='header cell'>Place</th>
+            <th class='header cell'>#</th>
             <th class='header cell nameCell'>Team</th>
-            <th class='header cell'>Points</th>
-            <th class='header cell'>Weeks</th>
+            <th class='header cell'>Pts</th>
             <th class='header cell'>Avg</th>
         </tr>
         <?php foreach($teams as $team): ?>
@@ -34,8 +33,10 @@ The following variables are usable:
                 <td class='cell nameCell'>
                     <a href="?team=<?php print$team->getId() ?>"><?php print $team->getName(); ?></a>
                 </td>
-                <td class='cell'><?php print $team->getTotalPoints(); ?></td>
-                <td class='cell'><?php print $team->getMatchesPlayed(); ?></td>
+                <td class='cell'>
+                    <?php print $team->getTotalPoints(); ?> /
+                    <?php print $team->getMatchesPlayed(); ?>
+                </td>
                 <td class='cell'>
                     <?php if($team->getMatchesPlayed() > 0) print round($team->getTotalPoints() / $team->getMatchesPlayed(), 2); ?>
                 </td>
@@ -46,7 +47,7 @@ The following variables are usable:
     <table border="0" cellpadding="0" cellspacing="0" class="standings">
         <caption>Player Standings</caption>
         <tr>
-            <th class='header cell'>Place</th>
+            <th class='header cell'>#</th>
             <th class='header cell nameCell'>Player</th>
             <th class='header cell'>Wins</th>
             <th class='header cell'>Win %</th>
