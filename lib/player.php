@@ -365,8 +365,8 @@ class my5280_Player
             $myMeta = array();
         } else {
             $myMeta = array();
-            foreach($meta as $info) {
-                $myMeta[$info['meta_key']] = $info['meta_value'];
+            foreach($meta as $key => $values) {
+                $myMeta[$key] = $values[0];
             }
         }
         $this->meta = $myMeta;
