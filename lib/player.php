@@ -207,15 +207,15 @@ class my5280_Player
             $lookup = array();
             $existing = $this->entry->getMeta();
             if(is_array($existing)) {
-                foreach($existing as $id => $meta) {
-                    $lookup[$meta['meta_key']] = $id;
+                foreach($existing as $key => $value) {
+                    $lookup[$key] = $value;
                 }
             }
             
             // Build the update and add arrays
             foreach($this->meta as $key => $value) {
                 if(isset($lookup[$key])) {
-                    $update[$lookup[$key]] = array(
+                    $update[] = array(
                         'key' => $key,
                         'value' => $value,
                     );
