@@ -31,6 +31,9 @@ class my5280AdminPanel
         });
 
         add_filter('league_menu_5280pool', array($this, 'appendToLeagueMenu'));
+        add_filter('leaguemanager_matches_file_5280pool', function($league) {
+            return __DIR__ . '/matches.php';
+        });
     }
 
 
@@ -42,22 +45,6 @@ class my5280AdminPanel
     public function appendToLeagueMenu($menu)
     {
         global $leaguemanager;
-
-        // Remove the teams and matches menu items
-#        $menu['team']['show'] = false;
-#        $menu['match']['show'] = false;
-#        unset($menu['team'], $menu['match']);
-
-        /*
-        // Add a link for importing an XLSX file for the active session
-        if($leaguemanager->getSeason($leaguemanager->getCurrentLeague())) {
-            $menu['upload'] = array(
-                'title' => 'Upload',
-                'file' => dirname(__FILE__) . '/upload.php',
-                'show' => true,
-            );
-        }
-         */
 
         // Easier match setup
         if($leaguemanager->getSeason($leaguemanager->getCurrentLeague())) {
@@ -259,22 +246,6 @@ class my5280AdminPanel
      */
     public function menu()
     {
-        $page = add_submenu_page(
-            'leaguemanager',
-            __('Import Players','my5280'),
-            __('Import Players','my5280'),
-            'manage_options',
-            'my5280_import_players',
-            array($this, 'displayPlayerImport')
-        );
-        $page = add_submenu_page(
-            'leaguemanager',
-            __('Import Doubles','my5280'),
-            __('Import Doubles', 'my5280'),
-            'manage_options',
-            'my5280_import_doubles',
-            array($this, 'displayDoublesImport')
-        );
         $page = add_submenu_page(
             'leaguemanager',
             __('Update Handicaps','my5280'),
