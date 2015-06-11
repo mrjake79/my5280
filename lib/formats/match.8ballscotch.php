@@ -15,7 +15,7 @@ class my5280_Match_8BallScotch extends my5280_Match
     public function getAwayDoublesHandicap()
     {
         // Check for a stored handicap
-        if(isset($this->data->custom['awayDoublesHandicap'])) {
+        if(isset($this->data->custom['awayDoublesHandicap']) && $this->data->custom['awayDoublesHandicap'] !== '') {
             return $this->data->custom['awayDoublesHandicap'];
         }
 
@@ -80,7 +80,7 @@ class my5280_Match_8BallScotch extends my5280_Match
     public function getHomeDoublesHandicap()
     {
         // Check for a stored handicap
-        if(isset($this->data->custom['homeDoublesHandicap'])) {
+        if(isset($this->data->custom['homeDoublesHandicap']) && $this->data->custom['homeDoublesHandicap'] !== '') {
             return $this->data->custom['homeDoublesHandicap'];
         }
 

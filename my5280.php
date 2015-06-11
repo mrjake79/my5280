@@ -550,6 +550,7 @@ class my5280 //extends LeagueManager
                 'playerTotals' => array(),
                 'totalHcpPoints' => 0,
                 'totalPoints' => 0,
+                'doublesHandicap' => ($curMatch instanceof my5280_Match_8BallScotch ? $curMatch->getHomeDoublesHandicap() : null),
             );
 
             // Get away team information
@@ -600,6 +601,7 @@ class my5280 //extends LeagueManager
                 'playerTotals' => array(),
                 'totalHcpPoints' => 0,
                 'totalPoints' => 0,
+                'doublesHandicap' => ($curMatch instanceof my5280_Match_8BallScotch ? $curMatch->getAwayDoublesHandicap() : null),
             );
 
             // Process scores
