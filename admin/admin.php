@@ -295,16 +295,22 @@ class my5280AdminPanel
             }
         }
 
-        // Make the adjustment for the players
+        // Check for form submission
+        $saveChanges = (isset($_POST['action']) && !empty($_POST['action']));
+
+        // Process the player information
         $changed = array();
         foreach($players as $p) {
             $gameChange = $p['actualGames'] - $p['currentGames'];
             $pointChange = $p['actualPoints'] - $p['currentPoints'];
             if($gameChange != 0 || $pointChange != 0) {
                 $p['object']->adjustHandicap($gameChange, $pointChange);
-                $p['object']->save();
                 $p['actualHandicap'] = $p['object']->getHandicap();
                 $changed[] = $p;
+
+                if($saveChanges) {
+                    $p['object']->save();
+                }
             }
         }
 
