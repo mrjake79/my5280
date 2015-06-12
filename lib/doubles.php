@@ -222,8 +222,8 @@ class my5280_Doubles
                 $this->cnMeta = array();
                 $allMeta = cnMeta::get('entry', $this->cnData->id);
                 if(is_array($allMeta)) {
-                    foreach($allMeta as $meta) {
-                        $this->cnMeta[$meta['meta_key']] = $meta['meta_value'];
+                    foreach($allMeta as $key => $values) {
+                        $this->cnMeta[$key] = $values[0];
                     }
                 }
             } else {
