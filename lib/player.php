@@ -366,8 +366,13 @@ class my5280_Player
         } else {
             $myMeta = array();
             foreach($meta as $key => $values) {
+                if(count($values) > 1 && count(array_unique($values)) == 1) {
+                    cnMeta::delete('entry', $this->entry->getId(), $key);
+                    cnMeta::add('entry', $this->entry->getId(), $key, $values[0]);
+                }
                 $myMeta[$key] = $values[0];
             }
+
         }
         $this->meta = $myMeta;
         return $myMeta;

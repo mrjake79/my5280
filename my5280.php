@@ -270,7 +270,7 @@ class my5280 //extends LeagueManager
      */
     function settings($league)
     {
-        $choices = array('8ballscotch' => 'Scotch Doubles', '8ball5x5' => '8-Ball 5x5');
+        $choices = array('8ballscotch' => 'Scotch Doubles', '8ball5x5' => '8-Ball 5x5', '8ballsingles' => '8-Ball Singles');
 
         ?><tr valign="top">
             <th scope="row"><label for="league_format">League Format</label></th>
@@ -287,6 +287,16 @@ class my5280 //extends LeagueManager
                 </select>
             </td>
         </tr><?php
+
+        if(!empty($league->league_format)) {
+            $league_decorator_path = __DIR__ . '/lib/formats/league.' . $league->league_format . '.php';
+            if(file_exists($league_decorator_path)) {
+                include_once($league_decorator_path);
+                $class_name = 'my5280_League_' . $league->league_format;
+                $league = new $class_name($league);
+                $league->display_settings();
+            }
+        }
     }
 
 
@@ -494,7 +504,6 @@ class my5280 //extends LeagueManager
         if($curMatch) {
             // Load format-specific functionality
             $format = $session->getLeagueFormat();
-            require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $format . '.php');
 
             // Initialize the team array
             $teams = array();

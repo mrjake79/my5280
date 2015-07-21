@@ -65,7 +65,7 @@ scoresheet edit form for 8-Ball 5x5
                                 />
                             </div>
                             <div class='cell playerName player<?php print $i; ?>'>
-                                <select class='teamPlayer' name="player[<?php print $i; ?>]">
+                                <select class='teamPlayer <?php print $label; ?>player<?php print $i; ?>' name="player[<?php print $i; ?>]">
                                     <option value="NONE">(None/Forfeit)</option>
                                     <?php $found = false; foreach($info['players'] as $player): ?>
                                         <option value="<?php print $player['id']; ?>"
@@ -78,7 +78,7 @@ scoresheet edit form for 8-Ball 5x5
                                     >(Other)</option>
                                 </select>
                                 <div class='otherPlayer'>
-                                    <select id="otherPlayer<?php print $i; ?>" class='otherPlayer' name="otherPlayer[<?php print $i; ?>]">
+                                    <select id="otherPlayer<?php print $i; ?>" class='otherPlayer' name="otherPlayer[<?php print $i; ?>]" sel="<?php if(isset($players[$i]) && $players[$i]['id'] != null) print $players[$i]['id']; ?>">
                                         <option value="">(Other Player)</option>
                                         <?php if($i == 0): foreach($allPlayers as $player): ?>
                                             <option value="<?php print $player->getId(); ?>"
@@ -127,13 +127,16 @@ scoresheet edit form for 8-Ball 5x5
                                         $iGame = $curMatch->getHomeGame($j, $i);
                                     }
                                 ?>
-                                    <div class="cell score game<?php print $iGame; ?>" round="<?php print $j; ?>" player="<?php print $i; ?>">
+                                <div class="cell score" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                            class="HOMEgame<?php print $iGame; ?> HOMEgame"
                                             <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
                                         />
-                                    <?php elseif(isset($info['scores'][$iGame])): ?>
-                                        <?php print $info['scores'][$iGame]; ?>
+                                    <?php else: ?>
+                                        <span class="AWAYgame AWAYgame<?php print $iGame; ?>">
+                                            <?php if(isset($info['scores'][$iGame])) print $info['scores'][$iGame]; ?>
+                                        </span>
                                     <?php endif; ?>
                                 </div>
                             <?php endfor; ?>

@@ -85,7 +85,7 @@ scoresheet edit form for scotch doubles
                                 />
                             </div>
                             <div class='cell playerName player<?php print $i ?>'>
-                                <select class='teamPlayer' name="player[<?php print $i ?>]">
+                                <select class="teamPlayer <?php print $label; ?>player<?php print $i;?>" name="player[<?php print $i ?>]">
                                     <option value="NONE">(Select one)</option>
                                     <?php foreach($info['players'] as $player): ?>
                                         <option value="<?php print $player['id']; ?>"
@@ -129,10 +129,13 @@ scoresheet edit form for scotch doubles
                                 <div class='cell score game<?php print $iGame; ?>' player="<?php print $iPlayer; ?>" round="<?php print $iRound; ?>">
                                     <?php if($label == 'HOME'): ?>
                                         <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                            class="HOMEgame HOMEgame<?php print $iGame; ?>"
                                             <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
                                         />
-                                    <?php elseif(isset($info['scores'][$iGame])): ?>
-                                        <?php print $info['scores'][$iGame]; ?>
+                                    <?php else: ?>
+                                        <span class="AWAYgame AWAYgame<?php print $iGame; ?>">
+                                            <?php if(isset($info['scores'][$iGame])) print $info['scores'][$iGame]; ?>
+                                        </span>
                                     <?php endif; ?>
                                 </div>
                             <?php endfor; ?>
@@ -166,10 +169,13 @@ scoresheet edit form for scotch doubles
                             <div class='cell score game<?php print $i; ?>'>
                                 <?php if($label == 'HOME'): ?>
                                     <input type='number' name='score[<?php print $i; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                        class="HOMEgame HOMEgame<?php print $i; ?>"
                                     <?php if(isset($info['scores'][$i])) print 'value="' . $info['scores'][$i] . '"'; ?>
                                     />
-                                <?php elseif(isset($info['scores'][$i])): ?>
-                                    <?php print $info['scores'][$i]; ?>
+                                <?php else: ?>
+                                    <span class="AWAYgame AWAYgame<?php print $i; ?>">
+                                        <?php if(isset($info['scores'][$i])) print $info['scores'][$i]; ?>
+                                    </span>
                                 <?php endif; ?>
                             </div>
                         <?php endfor; ?>

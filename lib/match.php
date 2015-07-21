@@ -27,7 +27,6 @@ class my5280_Match
             $session = $this->getSession();
             $Format = $session->getLeagueFormat();
         }
-        require_once(MY5280_PLUGIN_DIR . 'lib/formats/functions.' . $Format . '.php');
         $this->format = $Format;
 
         // Store the original scores

@@ -22,10 +22,15 @@ my5280.init = function()
     if(allPlayers) {
         allPlayers = allPlayers.options;
         jQuery('select.otherPlayer').each(function() {
-            if(this.id == 'otherPlayer0') return;
+            var sel = this.getAttribute('sel');
 
             for(var i = 1; i < allPlayers.length - 1; i++) {
-                this.appendChild(allPlayers[i].cloneNode(true));
+                if(this.id != 'otherPlayer0') {
+                    this.appendChild(allPlayers[i].cloneNode(true));
+                }
+                if(allPlayers[i].value == sel) {
+                    this.selectedIndex = i;
+                }
             }
         });
     }
@@ -62,7 +67,7 @@ my5280.handleChange = function()
             });
         }
 
-        jQuery('.scoresheet .HOME .score input').each(my5280.handleChange);
+        jQuery('.scoresheet .HOMEgame').each(my5280.handleChange);
         break;
     case 'handicap':
         my5280.updateTotals();
@@ -71,22 +76,20 @@ my5280.handleChange = function()
         // Determine the home game
         var homeRound = parseInt(this.parentNode.getAttribute('round'));
         var homePlayer = parseInt(this.parentNode.getAttribute('player'));
-        var homeGame = /game(\d+)/.exec(this.parentNode.className);
+        var homeGame = /HOMEgame(\d+)/.exec(this.className);
         homeGame = parseInt(homeGame[1]);
 
         // Determine the away game and player
         var awayGame = homeGame;
-        var awayCell = jQuery('.scoresheet .AWAY .game' + awayGame);
+        var awayCell = jQuery('.scoresheet .AWAYgame' + awayGame);
         if(awayCell.length == 0) return;
         else awayCell = awayCell[0];
-        var awayPlayer = awayCell.parentNode.className;
-        var matches = /player(\d+)/.exec(awayPlayer);
-        awayPlayer = parseInt(matches[1]);
+        var awayPlayer = parseInt(jQuery(awayCell).attr('awayplayer'));
 
         // Determine the matching score
-        if(jQuery('.scoresheet .HOME .player' + homePlayer + ' select').val() == 'NONE') {
+        if(jQuery('.scoresheet .HOMEplayer' + homePlayer).val() == 'NONE') {
             var theirScore = 8;
-        } else if(jQuery('.scoresheet .AWAY .player' + awayPlayer + ' select').val() == 'NONE') {
+        } else if(jQuery('.scoresheet .AWAYplayer' + awayPlayer).val() == 'NONE') {
             var theirScore = 0;
         } else {
             var myScore = parseInt(this.value);
@@ -98,7 +101,7 @@ my5280.handleChange = function()
         }
 
         // Display the score
-        jQuery('.scoresheet .AWAY .game' + awayGame).text(theirScore);
+        jQuery('.scoresheet .AWAYgame' + awayGame).text(theirScore);
 
         // Update totals
         my5280.updateTotals();
