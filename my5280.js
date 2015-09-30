@@ -84,7 +84,7 @@ my5280.handleChange = function()
         var awayCell = jQuery('.scoresheet .AWAYgame' + awayGame);
         if(awayCell.length == 0) return;
         else awayCell = awayCell[0];
-        var awayPlayer = parseInt(jQuery(awayCell).attr('awayplayer'));
+        var awayPlayer = parseInt(jQuery(awayCell.parentNode).attr('player'));
 
         // Determine the matching score
         if(jQuery('.scoresheet .HOMEplayer' + homePlayer).val() == 'NONE') {
