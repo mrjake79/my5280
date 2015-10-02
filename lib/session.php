@@ -364,8 +364,12 @@ class my5280_Session
             $this->listTeams();
 
             global $leaguemanager;
-            $filter = "league_id = {$this->getLeagueId()} and season = '{$this->getName()}'";
-            if($DoneOnly) $filter .= ' and (home_points != 0 or away_points != 0)';
+            $filter = array('league_id' => $this->getLeagueId(), 'season' => $this->getName());
+            if($DoneOnly) {
+                $filter['home_points'] = 'not_null';
+                $filter['away_points'] = 'not_null';
+            }
+
             foreach($leaguemanager->getMatches($filter) as $match) {
                 // Add the match and index it
                 $index = $match->id;
@@ -443,7 +447,7 @@ class my5280_Session
             include_once(dirname(__FILE__) . '/team.php');
 
             global $leaguemanager;
-            $filter = "league_id = {$this->getLeagueId()} and season = '{$this->getName()}'";
+            $filter = array('league_id' => $this->getLeagueId(), 'season' => $this->getName());
             foreach($leaguemanager->getTeams($filter) as $team) {
                 $this->teams[$team->id] = new my5280_Team($team);
                 $this->teamLookup[$team->number] = $team->id;

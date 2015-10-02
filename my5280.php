@@ -141,7 +141,8 @@ class my5280 //extends LeagueManager
     public function getMatch($ID)
     {
         global $leaguemanager;
-        foreach($leaguemanager->getMatches('id=' . $ID) as $match) {
+        $match = $leaguemanager->getMatch($ID);
+        if($match) {
             $session = $this->getSession($match->league_id, $match->season);
             return $session->getMatch($match);
         }
@@ -223,9 +224,7 @@ class my5280 //extends LeagueManager
                 $entry = new cnEntry($entry);
             }
         } else {
-            print '<pre>';
-            print_r(debug_backtrace());
-            exit;
+            throw new Exception("Invalid player identifier.");
         }
 
         // Return the my5280_Player object

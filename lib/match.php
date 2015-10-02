@@ -323,7 +323,9 @@ class my5280_Match
             $players = array();
             if(isset($this->data->custom['players'])) {
                 foreach($this->data->custom['players'] as $index => $info) {
-                    $info['player'] = my5280::$instance->getPlayer($info['id']);
+                    if(!is_null($info['id'])) {
+                        $info['player'] = my5280::$instance->getPlayer($info['id']);
+                    }
                     $players[$index] = $info;
                 }
             }

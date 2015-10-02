@@ -26,6 +26,7 @@ $firstWeek = array_shift(array_keys($dates));
     </div>
 <?php endif; ?>
 <br style='clear: left;' class='clearFloats' />
+<p>PLEASE NOTE: The schedule now displays AWAY team first and HOME team second (AWAY @ HOME).</p>
 <div class="schedule">
     <?php foreach($dates as $date => $data):
         $class = 'week';
@@ -63,20 +64,22 @@ $firstWeek = array_shift(array_keys($dates));
                                     <?php if($scoresheet_url): ?>
                                         <a href="<?php print $scoresheet_url; ?>?match=<?php print $match->getId(); ?>">
                                     <?php endif; ?>
-                                    <?php print $match->getHomeTeam()->getName(); ?>
-                                    <small>vs.</small> 
                                     <?php print $match->getAwayTeam()->getName(); ?>
+                                    <?php if($match->getHomeScore() > 0 || $match->getAwayScore() > 0): 
+                                        print '(' . $match->getAwayScore() . ')';
+                                    endif; ?><br />
+                                    <small>@</small> 
+                                    <?php print $match->getHomeTeam()->getName(); ?>
+                                    <?php if($match->getHomeScore() > 0 || $match->getAwayScore() > 0): 
+                                        print '(' . $match->getHomeScore() . ')';
+                                    endif; ?>
                                     <?php if($scoresheet_url) print '</a>'; ?>
                                 </div>
-                                <div class='location matchPart'>
-                                    <?php 
-                                        if($match->getHomeScore() > 0 || $match->getAwayScore() > 0):
-                                            print $match->getHomeScore() . '-' . $match->getAwayScore() . ' (final)';
-                                        else:
-                                            print '@ ' . htmlentities(ucwords($match->getLocation())); 
-                                        endif;
-                                    ?>
-                                </div>
+                                <?php if($match->getHomeScore() == 0 && $match->getAwayScore() == 0): ?>
+                                    <div class='location matchPart'>
+                                        <?php print '(' . htmlentities(ucwords($match->getLocation())) . ')'; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

@@ -233,12 +233,28 @@ class my5280_Team
 
         // Build the filter
         $id = $this->getId();
-        $filter = "league_id = {$this->getLeagueId()} and season = '{$this->getSeason()}' and (home_team = {$id} or away_team = {$id})";
-
         $matches = array();
+
+        $filter = array(
+            "league_id" => $this->getLeagueId(),
+            "season" => $this->getSeason(),
+            "home_team" => $id,
+        );
+
         foreach($leaguemanager->getMatches($filter) as $match) {
             $matches[] = $session->getMatch($match);
         }
+
+        $filter = array(
+            "league_id" => $this->getLeagueId(),
+            "season" => $this->getSeason(),
+            "away_team" => $id,
+        );
+
+        foreach($leaguemanager->getMatches($filter) as $match) {
+            $matches[] = $session->getMatch($match);
+        }
+
         return $matches;
     }
 
