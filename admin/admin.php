@@ -60,32 +60,6 @@ class my5280AdminPanel
 
 
     /**
-     * Display the import doubles page.
-     *
-     * @param none
-     */
-    public function displayDoublesImport()
-    {
-        global $leaguemanager;
-
-        include(MY5280_PLUGIN_DIR . 'admin/import_doubles.php');
-    }
-
-
-    /**
-     * Display the import players page.
-     *
-     * @param none
-     */
-    public function displayPlayerImport()
-    {
-        global $leaguemanager;
-
-        include(MY5280_PLUGIN_DIR . 'admin/import_players.php');
-    }
-
-
-    /**
      * Override match editing.
      */
     public function editMatch($league, $teams, $season, $max_matches, $matches, $submit_title, $mode)
@@ -118,134 +92,13 @@ class my5280AdminPanel
 
 
     /**
-     * Import doubles from an Excel file.
-     *
-     * @param array $file Excel file.
-     * @return void
-     */
-    public function importDoubles($file)
-    {
-        global $connections;
-        $cnRetrieve = $connections->retrieve;
-
-        require_once(MY5280_PLUGIN_DIR . '/lib/PHPExcel/Classes/PHPExcel.php');
-
-        // Load the Players sheet from the file
-        $reader = PHPExcel_IOFactory::createReader('Excel2007');
-        $reader->setReadDataOnly(true);
-        $excel = $reader->load($file['tmp_name']);
-        $sheet = $excel->getActiveSheet();
-
-        // Get the my5280 instance
-        $my5280 = my5280::$instance;
-
-        // Extract the players
-        $lastRow = $sheet->getHighestRow();
-        for($row = 2; $row <= $lastRow; ++$row) {
-            // Get data
-            $cells = $sheet->rangeToArray('A' . $row . ':C' . $row, null, true, true, false);
-            $cells = $cells[0];
-            if(!$cells[0]) continue;
-
-            // Extract names
-            $names = explode('+', $cells[0]);
-            if(count($names) != 2) continue;
-
-            // Get the players
-            $players = array();
-            foreach($names as $name) {
-                $players[] = $my5280->getPlayer($name);
-            }
-
-            // Get the doubles, update, and save
-            $doubles = $my5280->getDoubles($players[0]->getName(), $players[1]->getName());
-            $doubles->setStartingGames($cells[1]);
-            $doubles->setStartingHandicap($cells[2]);
-            $doubles->save();
-        }
-    }
-
-
-    /**
-     * import players from a Players.xlsx file.
-     *
-     * @param array $file Excel file.
-     * @return void
-     */
-    public function importPlayers($file)
-    {
-        global $connections;
-        $cnRetrieve = $connections->retrieve;
-
-        require_once(MY5280_PLUGIN_DIR . '/lib/PHPExcel/Classes/PHPExcel.php');
-
-        // Load the Players sheet from the file
-        $reader = PHPExcel_IOFactory::createReader('Excel2007');
-        $reader->setReadDataOnly(true);
-        $reader->setLoadSheetsOnly('Players');
-        $excel = $reader->load($file['tmp_name']);
-        $sheet = $excel->getSheetByName('Players');
-
-        // Get the my5280 instance
-        $my5280 = my5280::$instance;
-
-        // Extract the players
-        $lastRow = $sheet->getHighestRow();
-        for($row = 2; $row <= $lastRow; ++$row) {
-            // Get data
-            $cells = $sheet->rangeToArray('A' . $row . ':N' . $row, null, true, true, false);
-            $cells = $cells[0];
-            if(!$cells[0]) continue;
-
-            // Get the player and assign information
-            $player = $my5280->getPlayer($cells[0]);
-
-            // Set the address (if available)
-            if($cells[1] != null) {
-                $player->setAddress('home', $cells[1], $cells[2], $cells[3], $cells[4], 'USA');
-            }
-
-            // Add date of birth
-            if($cells[5] != null) {
-                if(is_numeric($cells[5])) {
-                    $date = PHPExcel_Shared_Date::ExcelToPHP($cells[5]);
-                } else {
-                    $date = strtotime($cells[5]);
-                }
-                $player->setBirthDate(date('Y-m-d', $date));
-            }
-
-            // Add email
-            if($cells[6] != null) {
-                $player->setEmailAddress($cells[6]);
-            }
-
-            // Add phone
-            if($cells[7] != null) {
-                $player->setPhoneNumber('cellphone', $cells[7]);
-            }
-
-            // Assign the starting handicap and lifetime games
-            $player->setStartingHandicap($cells[8], $cells[9]);
-
-            // Assign legal first name
-            if($cells[13]) {
-                $player->setLegalFirstName($cells[13]);
-            }
-
-            // Save the player
-            $player->save();
-        }
-    }
-
-
-    /**
      * adds menu to the admin interface
      *
      * @param none
      */
     public function menu()
     {
+        /*
         $page = add_submenu_page(
             'leaguemanager',
             __('Update Handicaps','my5280'),
@@ -254,6 +107,7 @@ class my5280AdminPanel
             'my5280_update_handicaps',
             array($this, 'updateHandicaps')
         );
+         */
     }
 
 
@@ -276,15 +130,27 @@ class my5280AdminPanel
                         // Add the player if not already in the list
                         if(!isset($players[$player])) {
                             $p = my5280::$instance->getPlayer($player);
-                            $players[$player] = array(
-                                'object' => $p,
-                                'name' => $p->getName(),
-                                'currentGames' => $p->getTotalGames(),
-                                'currentPoints' => $p->getTotalPoints(),
-                                'currentHandicap' => $p->getHandicap(),
-                                'actualGames' => 0,
-                                'actualPoints' => 0,
-                            );
+                            if($p) {
+                                $players[$player] = array(
+                                    'object' => $p,
+                                    'name' => $p->getName(),
+                                    'currentGames' => $p->getTotalGames(),
+                                    'currentPoints' => $p->getTotalPoints(),
+                                    'currentHandicap' => $p->getHandicap(),
+                                    'actualGames' => 0,
+                                    'actualPoints' => 0,
+                                );
+                            } else {
+                                $players[$player] = array(
+                                    'object' => null,
+                                    'name' => '!!! Player # ' . $player . ' (DELETED)',
+                                    'currentGames' => null,
+                                    'currentPoints' => null,
+                                    'currentHandicap' => null,
+                                    'actualGames' => 0,
+                                    'actualPoints' => 0,
+                                );
+                            }
                         }
 
                         // Update games and points
@@ -303,7 +169,9 @@ class my5280AdminPanel
         foreach($players as $p) {
             $gameChange = $p['actualGames'] - $p['currentGames'];
             $pointChange = $p['actualPoints'] - $p['currentPoints'];
-            if($gameChange != 0 || $pointChange != 0) {
+            if(!$p['object']) {
+                $changed[] = $p;
+            } elseif($gameChange != 0 || $pointChange != 0) {
                 $p['object']->adjustHandicap($gameChange, $pointChange);
                 $p['actualHandicap'] = $p['object']->getHandicap();
                 $changed[] = $p;
@@ -321,39 +189,5 @@ class my5280AdminPanel
 
         // Include the template
         include(MY5280_PLUGIN_DIR . 'admin/update_handicaps.php');
-    }
-
-
-    /**
-     * upload:  Upload a new Excel file for a session.
-     *
-     * @param int $league_id
-     * @param array $file Excel file
-     * @param string $name
-     * @return string
-     */
-    public function upload($league_id, $file, $name)
-    {
-        global $lmLoader, $leaguemanager;
-        $lmAdmin = $lmLoader->adminPanel;
-
-        $league = $leaguemanager->getCurrentLeague();
-        if($file['size'] > 0) {
-            // Get the session
-            $session = my5280::$instance->getSession($league, $name);
-
-            // Import the file
-            include_once(dirname(__FILE__) . '/../lib/importer.php');
-            $errors = array();
-            if(!my5280_Importer::import($session, $file, $errors)) {
-                $lmAdmin->setMessage(implode("\n", $errors), true);
-            } else {
-                return true;
-            }
-        } else {
-            $lmAdmin->setMessage(__('The uploaded file seems to be empty', 'leaguemanager'), true);
-        }
-
-        return false;
     }
 }

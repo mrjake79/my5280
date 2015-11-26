@@ -132,10 +132,6 @@ else:
                 <?php endfor; ?>
             </tbody>
         </table>
-        <h1>Generate Schedule</h1>
-        <p>You can generate this schedule automatically using the button below.  Matches that have already
-        been entered into the schedule will not be modified.</p>
-        <button id='generateButton' class='button'>Generate</button>
     </div>
     <div>
         <h1>Special Dates</h1>

@@ -742,16 +742,18 @@ class my5280 //extends LeagueManager
             foreach($match->listPlayerPoints() as $playerId => $points) {
                 if(!isset($players[$playerId]) && !isset($doubles[$playerId])) {
                     $player = my5280::$instance->getPlayer($playerId);
-                    if($player->getType() != 'family') {
-                        $players[$playerId] = $points;
-                        $players[$playerId]['id'] = $playerId;
-                        $players[$playerId]['name'] = $player->getName();
-                        $players[$playerId]['win%'] = round($players[$playerId]['wins'] / $players[$playerId]['games'] * 100, 2);
-                    } else {
-                        $doubles[$playerId] = $points;
-                        $doubles[$playerId]['id'] = $playerId;
-                        $doubles[$playerId]['name'] = $player->getName();
-                        $doubles[$playerId]['win%'] = round($doubles[$playerId]['wins'] / $doubles[$playerId]['games'] * 100, 2);
+                    if($player) {
+                        if($player->getType() != 'family') {
+                            $players[$playerId] = $points;
+                            $players[$playerId]['id'] = $playerId;
+                            $players[$playerId]['name'] = $player->getName();
+                            $players[$playerId]['win%'] = round($players[$playerId]['wins'] / $players[$playerId]['games'] * 100, 2);
+                        } else {
+                            $doubles[$playerId] = $points;
+                            $doubles[$playerId]['id'] = $playerId;
+                            $doubles[$playerId]['name'] = $player->getName();
+                            $doubles[$playerId]['win%'] = round($doubles[$playerId]['wins'] / $doubles[$playerId]['games'] * 100, 2);
+                        }
                     }
                 } elseif(isset($players[$playerId])) {
                     $players[$playerId]['games'] += $points['games'];
