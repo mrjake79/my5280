@@ -2,7 +2,7 @@
 /*
 Plugin Name: 5280 Pool League
 Description: Provides functionality specific to 5280 Pool League.
-Version: 0.0.1
+Version: 1.0
 Author: Jake Bahnsen
 
 Copyright 2014  Jake Bahnsen  (email : jake@5280pool.com)
@@ -36,14 +36,14 @@ class my5280 //extends LeagueManager
      *
      * @var string
      */
-    var $version = '0.0.1';
+    var $version = '1.0';
 
     /**
      * Database Version
      *
      * @var string
      */
-    var $dbversion = '0.1';
+    var $dbversion = '1.0';
 
 
     /**
@@ -65,6 +65,10 @@ class my5280 //extends LeagueManager
         global $my5280, $wpdb;
         $wpdb->show_errors();
         $this->loadLibraries();
+
+        // Activation and upgrade hook
+        register_activation_hook(__FILE__, array($this, 'install'));
+        add_action('plugins_loaded', array($this, 'install'));
 
         // Register the 5280 Pool League "sport"
         add_filter('leaguemanager_sports', array($this, 'sports'));
@@ -166,9 +170,7 @@ class my5280 //extends LeagueManager
         // Handle a numeric name
         if(is_numeric($Name)) {
             $entry = $cnRetrieve->entry($Name);
-            if($entry) {
-                $entry = new cnEntry($entry);
-            } else {
+            if(!$entry) {
                 return null;
             }
         } elseif(is_string($Name)) {
@@ -220,13 +222,10 @@ class my5280 //extends LeagueManager
                 } else {
                     return null;
                 }
-            } else {
-                $entry = new cnEntry($entry);
             }
         } else {
             throw new Exception("Invalid player identifier.");
         }
-
         // Return the my5280_Player object
         require_once(MY5280_PLUGIN_DIR . 'lib/player.php');
         return new my5280_Player($entry);
@@ -243,6 +242,68 @@ class my5280 //extends LeagueManager
     public function getSession($League = null, $Session = null)
     {
         return new my5280_Session($League, $Session);
+    }
+
+
+    /**
+     * Installation routine
+     */
+    public function install()
+    {
+        global $wpdb;
+
+        $installed_version = get_site_option('my5280_installed_version');
+        if($installed_version != $this->version)
+        {
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+            // Team players
+            $table_name = $wpdb->prefix . 'my5280_team_players';
+
+            $sql = "CREATE TABLE {$table_name} (
+                id int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+                team_id int(11) NOT NULL,
+                player_id bigint(20) NOT NULL
+            );";
+
+            dbDelta($sql);
+
+            // Match players
+            $table_name = $wpdb->prefix . 'my5280_match_players';
+
+            $sql = "CREATE TABLE {$table_name} (
+                id int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+                match_id int(11) NOT NULL,
+                position tinyint UNSIGNED NOT NULL,
+                team_id int(11) NOT NULL,
+                player_id bigint(20),
+                handicap smallint,
+                paid decimal(6,2)
+            );";
+
+            dbDelta($sql);
+
+            // Match scores
+            $table_name = $wpdb->prefix . 'my5280_match_scores';
+
+            $sql = "CREATE TABLE {$table_name} (
+                id bigint(20) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+                match_player_id int(11) NOT NULL,
+                round tinyint UNSIGNED NOT NULL,
+                game tinyint UNSIGNED NOT NULL,
+                score smallint NOT NULL DEFAULT 0
+            );";
+
+            dbDelta($sql);
+
+            // Determine if data for our tables should be extracted from other plugins
+            if($installed_version == null || version_compare($installed_version, '1.0') < 0) {
+                include(__DIR__ . '/lib/upgrade/import_leaguemanager_data.php');
+            }
+
+            // Update the installed version
+            update_option('my5280_installed_version', $this->version);
+        }
     }
 
 
@@ -284,6 +345,13 @@ class my5280 //extends LeagueManager
                         print '>' . $label . '</option>';
                     endforeach; ?>
                 </select>
+            </td>
+        </tr>
+        <tr valign="top">
+            <th scope="row"><label for="my5280_max_handicap_games">Max. Handicap Games</label></th>
+            <td>
+                <input type="number" name="settings[my5280_max_handicap_games]" id="my5280_max_handicap_games" minimum="1" maximum="999"
+                    value="<?php print $league->my5280_max_handicap_games; ?>" style="width: 4em;" />
             </td>
         </tr><?php
 
@@ -514,7 +582,7 @@ class my5280 //extends LeagueManager
                 $players[$player->getId()] = array(
                     'id' => $player->getId(),
                     'name' => $player->getName(),
-                    'handicap' => round($player->getHandicap(), 0),
+                    'handicap' => round($player->getHandicap($curMatch->getDate(), $session->getMaxHandicapGames()), 0),
                     'sel' => array(),
                 );
             }
@@ -522,23 +590,23 @@ class my5280 //extends LeagueManager
             // Indicate the selected players
             $homeHcp = 0;
             foreach($curMatch->listHomePlayers() as $index => $player) {
-                $id = $player['id'];
+                $id = $player->player_id;
                 if($id) {
                     // Make sure the player is in the list and is selected
                     if(!isset($players[$id])) {
                         $players[$id] = array(
                             'id' => $id,
-                            'name' => $player['player']->getName(),
-                            'handicap' => $player['handicap'],
+                            'name' => (isset($player->player) ? $player->player->getName() : '(Unknown)'),
+                            'handicap' => $player->handicap,
                             'sel' => array($index),
                         );
                     } else {
-                        $players[$id]['handicap'] = $player['handicap'];
+                        $players[$id]['handicap'] = $player->handicap;
                         $players[$id]['sel'][] = $index;
                     }
 
                     // Calculate total home handicap
-                    $homeHcp += $player['handicap'];
+                    $homeHcp += $player->handicap;
                 }
             }
 
@@ -568,7 +636,7 @@ class my5280 //extends LeagueManager
                 $players[$player->getId()] = array(
                     'id' => $player->getId(),
                     'name' => $player->getName(),
-                    'handicap' => round($player->getHandicap(), 0),
+                    'handicap' => round($player->getHandicap($curMatch->getDate(), $session->getMaxHandicapGames()), 0),
                     'sel' => array(),
                 );
             }
@@ -576,23 +644,23 @@ class my5280 //extends LeagueManager
             // Indicate the selected players
             $awayHcp = 0;
             foreach($curMatch->listAwayPlayers() as $index => $player) {
-                $id = $player['id'];
+                $id = $player->player_id;
                 if($id) {
                     // Make sure the player is in the list
                     if(!isset($players[$id])) {
                         $players[$id] = array(
                             'id' => $id,
-                            'name' => $player['player']->getName(),
-                            'handicap' => $player['handicap'],
+                            'name' => (isset($player->player) ? $player->player->getName() : '(Unknown)'),
+                            'handicap' => $player->handicap,
                             'sel' => array($index),
                         );
                     } else {
-                        $players[$id]['handicap'] = $player['handicap'];
+                        $players[$id]['handicap'] = $player->handicap;
                         $players[$id]['sel'][] = $index;
                     }
 
                     // Calculate total away handicap
-                    $awayHcp += $player['handicap'];
+                    $awayHcp += $player->handicap;
                 }
             }
 

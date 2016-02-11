@@ -2,7 +2,10 @@
 /**
 scoresheet view page for 8-Ball 5x5
 
-*/
+ */
+
+$curMatchDate = ($curMatch ? $curMatch->getDate() : null);
+$maxGames = $session->getMaxHandicapGames();
 
 ?>
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
@@ -36,7 +39,7 @@ scoresheet view page for 8-Ball 5x5
                                 <?php print $player->getName() ?>
                             </div>
                             <div class='cell handicap'>
-                                <?php print round($player->getHandicap(), 0); ?>
+                                <?php print round($player->getHandicap($curMatchDate, $maxGames), 0); ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

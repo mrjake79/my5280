@@ -1,10 +1,15 @@
 <?php
 
+require_once(__DIR__ . '/../lib/match.php');
+
+$session = my5280::$instance->getSession($league, $season['name']);
+$matches = $session->listMatches();
+
 $weeks = array();
 $per_week_matches = 0;
 if($matches) {
     foreach($matches as $match) {
-        $date = substr($match->date, 0, 10);
+        $date = substr($match->getDate(), 0, 10);
         if(!isset($weeks[$date])) $weeks[$date] = array();
         $weeks[$date][] = $match;
         $per_week_matches = max($per_week_matches, count($weeks[$date]));
@@ -53,19 +58,19 @@ else
                 <tr class="<?php echo $class; ?>">
                     <td class='date-column'><?php print mysql2date(get_option('date_format'), $date); ?></td>
                     <?php foreach($matches as $match): 
-                        $title = $leaguemanager->getMatchTitle($match->id);
+                        $title = $leaguemanager->getMatchTitle($match->getId());
                         ?>
                         <td>
-                            <input type='hidden' name="matches[<?php echo $match->id ?>]" value="<?php echo $match->id ?>" />
-                            <input type="hidden" name="home_team[<?php echo $match->id ?>]" value="<?php echo $match->home_team ?>" />
-                            <input type='hidden' name="away_team[<?php echo $match->id ?>]" value="<?php echo $match->away_team ?>" />
-                            <input type='checkbox' value="<?php echo $match->id ?>" name="match[<?php echo $match->id ?>]" />
+                            <input type='hidden' name="matches[<?php echo $match->getId() ?>]" value="<?php echo $match->getId() ?>" />
+                            <input type="hidden" name="home_team[<?php echo $match->getId() ?>]" value="<?php echo $match->getHomeTeamId() ?>" />
+                            <input type='hidden' name="away_team[<?php echo $match->getId() ?>]" value="<?php echo $match->getAwayTeamId() ?>" />
+                            <input type='checkbox' value="<?php echo $match->getId() ?>" name="match[<?php echo $match->getId() ?>]" />
                         </td>
                         <td class='match-column'>
-                            <a href="admin.php?page=leaguemanager&amp;subpage=match&amp;league_id=<?php echo $league->id ?>&amp;edit=<?php echo $match->id ?>&amp;season=<?php echo $season['name'] ?><?php if(isset($group)) echo '&amp;group=' . $group ?>"><?php echo $title ?></a>
-                            <div class='match-location'><?php echo $match->location; ?></div>
-                            <?php if($match->home_points > 0 || $match->away_points > 0): ?>
-                                <div class='match-score'><?php echo $match->home_points . ' - ' . $match->away_points; ?></div>
+                            <a href="admin.php?page=leaguemanager&amp;subpage=match&amp;league_id=<?php echo $league->id ?>&amp;edit=<?php echo $match->getId() ?>&amp;season=<?php echo $season['name'] ?><?php if(isset($group)) echo '&amp;group=' . $group ?>"><?php echo $title ?></a>
+                            <div class='match-location'><?php echo $match->getLocation(); ?></div>
+                            <?php if($match->getHomeScore() > 0 || $match->getAwayScore() > 0): ?>
+                                <div class='match-score'><?php echo $match->getHomeScore() . ' - ' . $match->getAwayScore(); ?></div>
                             <?php endif; ?>
                         </td>
                     <?php endforeach; ?>

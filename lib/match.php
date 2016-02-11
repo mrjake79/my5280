@@ -13,6 +13,29 @@ include_once(dirname(__FILE__) . '/player.php');
 class my5280_Match
 {
     /**
+     * Factory
+     */
+    public static function factory($Data, $Format = null)
+    {
+        if($Format === null)
+        {
+            $league = my5280::$instance->getSession($Data['league_id'], $Data['season']);
+            $Format = $league->getLeagueFormat();
+        }
+
+        $classFile = dirname(__FILE__) . '/formats/match.' . $Format . '.php';
+        if(is_file($classFile)) {
+            $class = 'my5280_Match_' . $Format;
+        } else {
+            $class = 'my5280_Match';
+            $classFile = dirname(__FILE__) . '/match.php';
+        }
+        require_once($classFile);
+
+        return new $class($Data, $Format);
+    }
+
+    /**
      * Constructor.
      *
      * @param object Match data.
@@ -43,29 +66,25 @@ class my5280_Match
      */
     public function addPlayer($Position, $Player, $Handicap = null, $Paid = null)
     {
-        if($Player) {
-            if($Handicap === null) $Handicap = round($Player->getHandicap(), 0);
-            $info = array(
-                'id' => $Player->getId(),
-                'handicap' => $Handicap,
-                'paid' => $Paid,
-                'forfeit' => false,
-            );
-        } else {
-            $info = array(
-                'id' => null,
-                'handicap' => $Handicap,
-                'paid' => $Paid,
-                'forfeit' => true,
-            );
+        $this->listPlayers();
+
+        $session = $this->getSession();
+
+        $info = array(
+            'id' => null,
+            'match_id' => $this->getId(),
+            'position' => $Position,
+            'team_id' => ($this->isHomeTeamPosition($Position) ? $this->data->home_team : $this->data->away_team),
+            'player_id' => ($Player ? $Player->getId() : null),
+            'handicap' => ($Handicap === null && $Player ? round($Player->getHandicap($this->getDate(), $session->getMaxHandicapGames()), 0) : $Handicap),
+            'paid' => $Paid,
+            'player' => $Player,
+        );
+
+        if(isset($this->players[$Position])) {
+            $info['id'] = $this->players[$Position]->id;
         }
-
-        if(!is_array($this->data->custom['players'])) $this->data->custom['players'] = array();
-        $this->data->custom['players'][$Position] = $info;
-        ksort($this->data->custom['players']);
-
-        // Clear the away scores and player list
-        $this->players = null;
+        $this->players[$Position] = (object) $info;
 
         // Update total points (in case of handicap change)
         $this->updateTotalScores();
@@ -80,15 +99,40 @@ class my5280_Match
      */
     public function addScore($Game, $Score)
     {
-        // Get the players
-        $players = $this->listGamePlayers($Game);
+        $this->listScores();
 
-        // Save the score
-        if(!is_array($this->data->custom['scores'])) $this->data->custom['scores'] = array();
-        $this->data->custom['scores'][$Game] = array(
-            $players[0] => $Score,
-            $players[1] => $this->calculateAwayScore($Game, $Score),
-        );
+        // Save the home team score
+        if(isset($this->scores[$Game][$this->data->home_team])) {
+            $this->scores[$Game][$this->data->home_team]->score = $Score;
+        } else {
+            if(!isset($this->scores[$Game])) {
+                $this->scores[$Game] = array();
+            }
+            $this->scores[$Game][$this->data->home_team] = (object) array(
+                'id' => null,
+                'match_player_id' => null,
+                'round' => $this->getRoundNumber($Game),
+                'game' => $Game,
+                'score' => $Score,
+            );
+        }
+
+        // Save the away team score
+        $Score = $this->calculateAwayScore($Game, $Score);
+        if(isset($this->scores[$Game][$this->data->away_team])) {
+            $this->scores[$Game][$this->data->away_team]->score = $Score;
+        } else {
+            if(!isset($this->scores[$Game])) {
+                $this->scores[$Game] = array();
+            }
+            $this->scores[$Game][$this->data->away_team] = (object) array(
+                'id' => null,
+                'match_player_id' => null,
+                'round' => $this->getRoundNumber($Game),
+                'game' => $Game,
+                'score' => $Score,
+            );
+        }
 
         // Update totals
         $this->updateTotalScores();
@@ -118,6 +162,11 @@ class my5280_Match
         $session = $this->getSession();
         $teams = $session->listTeams();
         return $teams[$this->data->away_team];
+    }
+
+    public function getAwayTeamId()
+    {
+        return $this->data->away_team;
     }
 
 
@@ -156,6 +205,11 @@ class my5280_Match
         $session = $this->getSession();
         $teams = $session->listTeams();
         return $teams[$this->data->home_team];
+    }
+
+    public function getHomeTeamId()
+    {
+        return $this->data->home_team;
     }
 
 
@@ -239,6 +293,18 @@ class my5280_Match
 
 
     /**
+     * Determine if the player position is a home team position.
+     *
+     * @param int
+     * @return bool
+     */
+    public function isHomeTeamPosition($Position)
+    {
+        throw new Exception("Unimplemented");
+    }
+
+
+    /**
      * Get the away players.
      *
      * @param none
@@ -262,7 +328,11 @@ class my5280_Match
     {
         $awayScores = array();
         foreach($this->listScores() as $iGame => $scores) {
-            $awayScores[$iGame] = array_pop($scores);
+            if(isset($scores[$this->data->away_team])) {
+                $awayScores[$iGame] = $scores[$this->data->away_team]->score;
+            } else {
+                $awayScores[$iGame] = null;
+            }
         }
         return $awayScores;
     }
@@ -305,7 +375,11 @@ class my5280_Match
     {
         $homeScores = array();
         foreach($this->listScores() as $iGame => $scores) {
-            $homeScores[$iGame] = array_shift($scores);
+            if(isset($scores[$this->data->home_team])) {
+                $homeScores[$iGame] = $scores[$this->data->home_team]->score;
+            } else {
+                $homeScores[$iGame] = null;
+            }
         }
         return $homeScores;
     }
@@ -320,17 +394,18 @@ class my5280_Match
     public function listPlayers()
     {
         if($this->players === null) {
+            global $wpdb;
+
+            $sql = "SELECT * FROM {$wpdb->prefix}my5280_match_players WHERE match_id = {$this->getId()}";
+
             $players = array();
-            if(isset($this->data->custom['players'])) {
-                foreach($this->data->custom['players'] as $index => $info) {
-                    if(!is_null($info['id'])) {
-                        $info['player'] = my5280::$instance->getPlayer($info['id']);
-                        if($info['player'] == null) {
-                            $info['id'] = null;
-                        }
-                    }
-                    $players[$index] = $info;
+            foreach($wpdb->get_results($sql) as $player) {
+                if(!is_null($player->player_id)) {
+                    $player->player = my5280::$instance->getPlayer($player->player_id);
+                } else {
+                    $player->player = null;
                 }
+                $players[$player->position] = $player;
             }
             $this->players = $players;
         }
@@ -354,9 +429,9 @@ class my5280_Match
                     if(!isset($players[$player])) {
                         $players[$player] = array('points' => 0, 'games' => 0, 'wins' => 0);
                     }
-                    $players[$player]['points'] += $points;
+                    $players[$player]['points'] += $points->score;
                     $players[$player]['games']++;
-                    if($points > 7) {
+                    if($points->score > 7) {
                         $players[$player]['wins']++;
                     }
                 }
@@ -384,25 +459,29 @@ class my5280_Match
      */
     public function listScores()
     {
-        if(isset($this->data->custom['scores'])) {
+        if($this->scores === null) {
+            global $wpdb;
+
+            $sql = "SELECT scores.*, players.team_id "
+                . "FROM {$wpdb->prefix}my5280_match_scores scores, "
+                . "{$wpdb->prefix}my5280_match_players players "
+                . "WHERE players.id = scores.match_player_id "
+                . "AND match_id = {$this->getId()}";
+
             $scores = array();
-            foreach($this->data->custom['scores'] as $iGame => $score) {
-                if(is_array($score)) {
-                    $scores[$iGame] = $score;
-                } else {
-                    $players = $this->listGamePlayers($iGame);
-                    $awayScore =  $this->calculateAwayScore($iGame, $score);
-                    $scores[$iGame] = array(
-                        $players[0] => $score,
-                        $players[1] => $awayScore,
+            foreach($wpdb->get_results($sql) as $score) {
+                if(!isset($scores[$score->game])) {
+                    $scores[$score->game] = array(
+                        $score->team_id => $score,
                     );
+                } else {
+                    $scores[$score->game][$score->team_id] = $score;
                 }
             }
-            $this->data->custom['scores'] = $scores;
-        } else {
-            $this->data->custom['scores'] = array();
+
+            $this->scores = $scores;
         }
-        return $this->data->custom['scores'];
+        return $this->scores;
     }
 
 
@@ -414,7 +493,7 @@ class my5280_Match
      */
     public function save()
     {
-        global $lmLoader;
+        global $lmLoader, $wpdb;
         $lmAdmin = $lmLoader->adminPanel;
 
         // Save the match data
@@ -464,35 +543,39 @@ class my5280_Match
         );
         call_user_func_array(array($lmAdmin, 'updateResults'), $results);
 
-        // Updating scores.
-
-        // Get the player list.
-        $players = array();
-        $matchPlayers = $this->listPlayers();
-        foreach($this->listPlayers() as $player) {
-            $players[$player['id']] = $player['player'];
-        }
-
-        // Remove the original scores for the player
-        foreach($this->originalScores as $player => $score) {
-            if(!isset($players[$player])) {
-                $players[$player] = my5280::$instance->getPlayer($player);
+        // Save player assignments
+        if($this->players) {
+            foreach($this->players as $index => $player) {
+                unset($player->player);
+                if($player->id) {
+                    $player_id = $player->id;
+                    unset($player->id);
+                    $wpdb->update($wpdb->prefix.'my5280_match_players', (array)$player, array('id' => $player_id));
+                } else {
+                    unset($player->id);
+                    $wpdb->insert($wpdb->prefix.'my5280_match_players', (array)$player);
+                    $this->players[$index]->id = $wpdb->insert_id;
+                }
             }
-            $players[$player]->adjustHandicap(-($score['games']), -($score['points']));
         }
 
-        // Record new points for the players
-        foreach($this->listPlayerPoints() as $player => $points) {
-            if(!isset($players[$player])) {
-                $players[$player] = my5280::$instance->getPlayer($player);
-            }
-            $players[$player]->adjustHandicap($points['games'], $points['points']);
-        }
+        // Save scores
+        if($this->scores) {
+            foreach($this->scores as $index => $game) {
+                foreach($game as $teamId => $score) {
+                    $score = (array)$score;
+                    unset($score['team_id']);
 
-        // Save the players
-        foreach($players as $player) {
-            if($player) {
-                $player->save();
+                    if(isset($score['id'])) {
+                        $id = $score['id'];
+                        unset($score['id']);
+                        $wpdb->update($wpdb->prefix.'my5280_match_scores', $score, array('id' => $id));
+                    } else {
+                        unset($score['id']);
+                        $wpdb->insert($wpdb->prefix.'my5280_match_scores', $score);
+                        $this->scores[$index][$teamId]->id = $wpdb->insert_id;
+                    }
+                }
             }
         }
 
@@ -584,6 +667,12 @@ class my5280_Match
      * Players
      */
     protected $players = null;
+
+
+    /**
+     * Scores
+     */
+    protected $scores = null;
 
 
     /**

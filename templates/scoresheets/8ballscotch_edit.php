@@ -3,6 +3,9 @@
 scoresheet edit form for scotch doubles
 
  */
+
+$curMatchDate = ($curMatch ? $curMatch->getDate() : null);
+$maxGames = $session->getMaxHandicapGames();
 ?>
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
 <style type='text/css'>
@@ -41,7 +44,7 @@ scoresheet edit form for scotch doubles
                             <div class='player'>
                                 <div>
                                     <?php print $player->getName(); ?>: 
-                                    <?php print round($player->getHandicap(), 0); ?>
+                                    <?php print round($player->getHandicap($curMatchDate, $maxGames), 0); ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -52,7 +55,7 @@ scoresheet edit form for scotch doubles
                             <div class='doubles'>
                                 <div>
                                     <?php print $double->getName(); ?>:
-                                    <?php print round($double->getHandicap(), 0); ?>
+                                    <?php print round($double->getHandicap($curMatchDate, $maxGames), 0); ?>
                                 </div> 
                             </div>
                         <?php endforeach; ?>
@@ -81,7 +84,7 @@ scoresheet edit form for scotch doubles
                         <div class='row player'>
                             <div class='cell paid'>
                                 <input type='number' name='paid[]' maxlength='2' size='2' min='0' max='99' step='1'
-                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['paid'] . '"'; ?>
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . round($info['selPlayers'][$i]->paid, 0) . '"'; ?>
                                 />
                             </div>
                             <div class='cell playerName player<?php print $i ?>'>
@@ -97,7 +100,7 @@ scoresheet edit form for scotch doubles
                             </div>
                             <div class='cell handicap'>
                                 <input type='number' name='handicap[]' maxlength='2' size='2' min='0' max='15' step='1'
-                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['handicap'] . '"'; ?>
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]->handicap . '"'; ?>
                                 />
                             </div>
                         </div>

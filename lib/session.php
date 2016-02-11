@@ -253,6 +253,18 @@ class my5280_Session
 
 
     /**
+     * Retrieve the maximum number of games to use for handicaps.
+     */
+    public function getMaxHandicapGames()
+    {
+        if(isset($this->league->my5280_max_handicap_games) && $this->league->my5280_max_handicap_games != null) {
+            return $this->league->my5280_max_handicap_games;
+        }
+        return null;
+    }
+
+
+    /**
      * getName: Retrieve the name of the session.
      *
      * @param none
@@ -306,16 +318,10 @@ class my5280_Session
     public function listMatches($DoneOnly = false)
     {
         if(empty($this->matches)) {
+            require_once(__DIR__ . '/match.php');
+
             // Include the appropriate match class file
             $format = $this->getLeagueFormat();
-            $classFile = dirname(__FILE__) . '/formats/match.' . $format . '.php';
-            if(is_file($classFile)) {
-                $class = 'my5280_Match_' . $format;
-            } else {
-                $class = 'my5280_Match';
-                $classFile = dirname(__FILE__) . '/match.php';
-            }
-            require_once($classFile);
 
             $matches = array();
 
@@ -323,7 +329,7 @@ class my5280_Session
             $this->listTeams();
 
             global $leaguemanager;
-            $filter = array('league_id' => $this->getLeagueId(), 'season' => $this->getName());
+            $filter = array('league_id' => $this->getLeagueId(), 'season' => $this->getName(), 'limit' => false);
             if($DoneOnly) {
                 $filter['home_points'] = 'not_null';
                 $filter['away_points'] = 'not_null';
@@ -335,7 +341,7 @@ class my5280_Session
                 if($index == null) {
                     $index = -(count($this->matches));
                 }
-                $matches[$index] = new $class($match, $this->getLeagueFormat());
+                $matches[$index] = my5280_Match::factory($match, $format);
             }
 
             // Store the matches and index arrays

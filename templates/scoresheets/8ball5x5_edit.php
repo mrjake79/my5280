@@ -4,6 +4,9 @@ scoresheet edit form for 8-Ball 5x5
 
 */
 
+$curMatchDate = ($curMatch ? $curMatch->getDate() : null);
+$maxGames = $session->getMaxHandicapGames();
+
 ?>
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
 <style type='text/css'>
@@ -44,7 +47,7 @@ scoresheet edit form for 8-Ball 5x5
                                 <?php print $player->getName(); ?>
                             </div>
                             <div class='cell handicap'>
-                                <?php print round($player->getHandicap(), 0); ?>
+                                <?php print round($player->getHandicap($curMatchDate, $maxGames), 0); ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -61,7 +64,7 @@ scoresheet edit form for 8-Ball 5x5
                         <div class='row player'>
                             <div class='cell paid'>
                                 <input type='number' name='paid[]' maxlength='2' size='2' min='0' max='99' step='1' 
-                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['paid'] . '"'; ?>
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . round($info['selPlayers'][$i]->paid, 0) . '"'; ?>
                                 />
                             </div>
                             <div class='cell playerName player<?php print $i; ?>'>
@@ -82,7 +85,7 @@ scoresheet edit form for 8-Ball 5x5
                                         <option value="">(Other Player)</option>
                                         <?php if($i == 0): foreach($allPlayers as $player): ?>
                                             <option value="<?php print $player->getId(); ?>"
-                                            handicap="<?php print round($player->getHandicap(), 0); ?>"
+                                            handicap="<?php print round($player->getHandicap($curMatchDate, $maxGames), 0); ?>"
                                             ><?php print $player->getName(); ?></option>
                                         <?php endforeach; endif; ?>
                                     </select>
@@ -90,7 +93,7 @@ scoresheet edit form for 8-Ball 5x5
                             </div>
                             <div class='cell handicap'>
                                 <input type='number' name='handicap[]' maxlength='2' size='2' min='0' max='15' step='1'
-                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]['handicap'] . '"'; ?>
+                                <?php if(isset($info['selPlayers'][$i])) print 'value="' . $info['selPlayers'][$i]->handicap . '"'; ?>
                                 />
                             </div>
                         </div>

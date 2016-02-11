@@ -22,8 +22,15 @@
             <tbody>
                 <?php foreach($changed as $p): ?>
                     <tr>
-                        <td><?php print $p['name']; ?></td>
-                        <td><?php print $p['currentGames']; ?></td>
+                        <td>
+                            <?php print $p['name']; ?>
+                            <?php if(count($p['otherPlayers'])): ?>
+                                <div style='font-size: smaller; font-style: italic;'>Merging <?php print count($p['otherPlayers']); ?> Duplicate(s)</div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php print $p['currentGames']; ?>
+                        </td>
                         <td><?php print $p['currentPoints']; ?></td>
                         <td><?php print $p['currentHandicap']; ?></td>
                         <td><?php print $p['actualGames']; ?></td>

@@ -11,7 +11,8 @@ The following variables are usable:
 */
 
 $currentWeek = $session->getCurrentWeek();
-$firstWeek = array_shift(array_keys($dates));
+$date_keys = array_keys($dates);
+$firstWeek = array_shift($date_keys);
 
 ?>
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/schedule.css" />

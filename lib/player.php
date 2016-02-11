@@ -17,7 +17,15 @@ class my5280_Player
      */
     public function __construct($Entry)
     {
-        $this->entry = $Entry;
+        if($Entry === false) {
+            print '<pre>';
+            print_r(debug_backtrace());exit;
+        }
+        if($Entry instanceof cnEntry) {
+            $this->entry = $Entry;
+        } else {
+            $this->entry = new cnEntry($Entry);
+        }
     }
 
 
@@ -51,38 +59,50 @@ class my5280_Player
 
 
     /**
-     * Get the player's handicap.
+     * Delete the player.
      *
      * @param none
+     * @return void
+     */
+    public function delete()
+    {
+        $entry = new cnEntry;
+        $entry->delete($this->getId());
+    }
+
+
+    /**
+     * Get the player's handicap.
+     *
+     * @param date (optional) The date on which the handicap should be calculated (includes all games for matches before the provided date).
+     *                        If null, all recorded games are included (past and future).
      * @return float
      */
-    public function getHandicap()
+    public function getHandicap($AsOfDate = null, $GameLimit = null)
     {
-        # Get the meta data
-        $meta = $this->loadMeta();
+        global $wpdb;
+        $player_id = $this->getId();
+        if($player_id != null) {
+            $sql = "SELECT SUM(a.score) / COUNT(*) AS handicap 
+                FROM (SELECT s.score FROM {$wpdb->prefix}my5280_match_scores s
+                JOIN {$wpdb->prefix}my5280_match_players p ON p.id = s.match_player_id
+                JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
+                WHERE p.player_id = {$this->getId()}";
 
-        # Retrieve the starting handicap information
-        $startValue = isset($meta['my5280_handicap_start']) ? $meta['my5280_handicap_start'] : 7;
-        $startGames = isset($meta['my5280_lifetime_start']) ? $meta['my5280_lifetime_start'] : 0;
+            if($AsOfDate !== null) {
+                $sql .= " AND m.date < '" . $AsOfDate . " 00:00:00'";
+            }
+            $sql .= " ORDER BY m.date DESC, s.game DESC";
+            if($GameLimit != null) {
+                $sql .= " LIMIT {$GameLimit}";
+            }
+            $sql .= ") a";
 
-        # Retrieve points and games since the beginning
-        $totalPoints = isset($meta['my5280_points']) ? $meta['my5280_points'] : 0;
-        $totalGames = isset($meta['my5280_games']) ? $meta['my5280_games'] : 0;
-
-        # Handle no total games
-        if($totalGames == 0) {
-            # Just use the starting value
-            return $startValue;
-        } elseif($totalGames < 50) {
-            # We'll pull in enough games to get to 50 or the most that are available
-            $lessGames = 50 - $totalGames;
-            $availGames = min($lessGames, $startGames);
-            $totalPoints += ($startValue * $availGames);
-            $totalGames += $availGames;
+            $result = $wpdb->get_results($sql);
+            return $result[0]->handicap;
+        } else {
+            return null;
         }
-
-        # Return the average handicap
-        return $totalPoints / $totalGames;
     }
 
 
@@ -175,12 +195,11 @@ class my5280_Player
         global $connections;
 
         // Determine if this is a new or existing player
-        if($this->entry->getId() == null) {
+        $entryId = $this->entry->getId();
+        if($entryId == null) {
             if($this->entry->save()) {
                 // Retrieve the entry from Connections (again)
-                $cnRetrieve = $connections->retrieve;
-                $entry = $cnRetrieve->entry($connections->lastInsertID);
-                $this->entry = new cnEntry($entry);
+                $entryId = $connections->lastInsertID;
             } else {
                 // There was a problem saving
                 $Error = $connections->lastQueryError;
@@ -196,6 +215,11 @@ class my5280_Player
                 return false;
             }
         }
+
+        $cnRetrieve = $connections->retrieve;
+        $entry = $cnRetrieve->entry($entryId);
+        $this->entry = new cnEntry($entry);
+        $this->entry->setEntryType($entry->entry_type);
 
         // Handle meta data
         if($this->meta !== null) {

@@ -41,45 +41,35 @@ class my5280_Doubles
     /**
      * Retrieve the handicap for the doubles team.
      */
-    public function getHandicap()
+    public function getHandicap($AsOfDate = null, $GameLimit = null)
     {
-        // Get the meta data
-        $this->load();
-        $meta = $this->cnMeta;
+        global $wpdb;
+        $player_id = $this->getId();
+        if($player_id != null) {
+            $sql = "SELECT SUM(a.score) / COUNT(*) AS handicap 
+                FROM (SELECT s.score FROM {$wpdb->prefix}my5280_match_scores s
+                JOIN {$wpdb->prefix}my5280_match_players p ON p.id = s.match_player_id
+                JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
+                WHERE p.player_id = {$this->getId()}";
 
-        // Retrieve the starting handicap information
-        $startValue = isset($meta['my5280_handicap_start']) ? $meta['my5280_handicap_start'] : 0;
-        $startGames = isset($meta['my5280_lifetime_start']) ? $meta['my5280_lifetime_start'] : 0;
-
-        // Retrieve points and games since the beginning
-        $totalPoints = isset($meta['my5280_points']) ? $meta['my5280_points'] : 0;
-        $totalGames = isset($meta['my5280_games']) ? $meta['my5280_games'] : 0;
-
-        // Handle no total games
-        if($totalGames == 0) {
-            // Check for any previous games
-            if($startGames > 0) {
-                // This was imported from outside the system.
-                return $startValue;
-            } else {
-                // We'll use the average for the handicaps of the 2 players.  To make it easier,
-                // we average the rounded handicaps since that is all players have when they are
-                // first starting doubles.
-                foreach($this->familyMembers as $player) {
-                    $totalPoints += round($player->getHandicap(), 0);
-                }
-                return $totalPoints / 2;
+            if($AsOfDate !== null) {
+                $sql .= " AND m.date < '" . $AsOfDate . " 00:00:00'";
             }
-        } elseif($totalGames < 50) {
-            // We'll pull in enough games to get to 50 or the most that are available
-            $lessGames = 50 - $totalGames;
-            $availGames = min($lessGames, $startGames);
-            $totalPoints += ($startValue * $availGames);
-            $totalGames += $availGames;
-        }
+            $sql .= " ORDER BY m.date DESC, s.game DESC";
+            if($GameLimit != null) {
+                $sql .= " LIMIT {$GameLimit}";
+            }
+            $sql .= ") a";
 
-        # Return the average handicap
-        return $totalPoints / $totalGames;
+            $result = $wpdb->get_results($sql);
+            if(isset($result[0])) {
+                return $result[0]->handicap;
+            }
+        }
+        foreach($this->familyMembers as $player) {
+            $totalPoints += round($player->getHandicap($AsOfDate, $MaxGames), 0);
+        }
+        return $totalPoints / 2;
     }
 
 
@@ -114,6 +104,7 @@ class my5280_Doubles
         if(isset($this->cnData->id)) {
             // Use the existing entry
             $entry = new cnEntry($this->cnData);
+            $entry->setEntryType($this->cnData->entry_type);
         } else {
             // Initialize the new entry
             $entry = new cnEntry();

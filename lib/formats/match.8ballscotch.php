@@ -21,12 +21,15 @@ class my5280_Match_8BallScotch extends my5280_Match
 
         // Check for away players
         $players = $this->listPlayers();
-        if(!isset($players[2]) || $players[2]['id'] == null) return null;
-        if(!isset($players[3]) || $players[3]['id'] == null) return null;
+        if(!isset($players[2]) || $players[2]->player == null) return null;
+        if(!isset($players[3]) || $players[3]->player == null) return null;
+
+        // Get the session
+        $session = $this->getSession();
 
         // Get the doubles for the players
-        $doubles = my5280::$instance->getDoubles($players[2]['id'], $players[3]['id']);
-        return round($doubles->getHandicap(), 0);
+        $doubles = my5280::$instance->getDoubles($players[2]->player_id, $players[3]->player_id);
+        return round($doubles->getHandicap($this->getDate(), $session->getMaxHandicapGames()), 0);
     }
 
 
@@ -86,12 +89,15 @@ class my5280_Match_8BallScotch extends my5280_Match
 
         // Check for home players
         $players = $this->listPlayers();
-        if(!isset($players[0]) || $players[0]['id'] == null) return null;
-        if(!isset($players[1]) || $players[1]['id'] == null) return null;
+        if(!isset($players[0]) || $players[0]->player_id == null) return null;
+        if(!isset($players[1]) || $players[1]->player_id == null) return null;
+
+        // Get the session
+        $session = $this->getSession();
 
         // Get the doubles for the players
-        $doubles = my5280::$instance->getDoubles($players[0]['id'], $players[1]['id']);
-        return round($doubles->getHandicap(), 0);
+        $doubles = my5280::$instance->getDoubles($players[0]->player_id, $players[1]->player_id);
+        return round($doubles->getHandicap($this->getDate(), $session->getMaxHandicapGames()), 0);
     }
 
 
@@ -141,6 +147,25 @@ class my5280_Match_8BallScotch extends my5280_Match
 
 
     /**
+     * Determine if the player position is a home team position.
+     */
+    public function isHomeTeamPosition($Position)
+    {
+        return ($Position < 2 || $Position == 4);
+    }
+
+
+    /**
+     * Retrieve an array of players for the away team.
+     */
+    public function listAwayPlayers()
+    {
+        $players = $this->listPlayers();
+        return array_slice($players, 2, 2, true);
+    }
+
+
+    /**
      * Retrieve an array of players for a particular game.  The 1st player in the array
      * is the home player and the 2nd is the away player.
      *
@@ -153,8 +178,8 @@ class my5280_Match_8BallScotch extends my5280_Match
 
         if($Game > 3) {
             // This is a doubles game
-            $home = my5280::$instance->getDoubles($players[0]['id'], $players[1]['id']);
-            $away = my5280::$instance->getDoubles($players[2]['id'], $players[3]['id']);
+            $home = my5280::$instance->getDoubles($players[0]->player_id, $players[1]->player_id);
+            $away = my5280::$instance->getDoubles($players[2]->player_id, $players[3]->player_id);
             return array($home->getId(), $away->getId());
         } else {
             $iHome = $Game % 2;
@@ -169,8 +194,18 @@ class my5280_Match_8BallScotch extends my5280_Match
                 $iAway = $iHome + 2;
                 break;
             }
-            return array($players[$iHome]['id'], $players[$iAway]['id']);
+            return array($players[$iHome]->player_id, $players[$iAway]->player_id);
         }
+    }
+
+
+    /**
+     * Retrieve an array of players for the home team.
+     */
+    public function listHomePlayers()
+    {
+        $players = $this->listPlayers();
+        return array_slice($players, 0, 2);
     }
 
 
@@ -185,12 +220,12 @@ class my5280_Match_8BallScotch extends my5280_Match
         // Determine the home and away total handicaps
         $homeTotal = 0;
         foreach($this->listHomePlayers() as $player) {
-            $homeTotal += $player['handicap'];
+            $homeTotal += $player->handicap;
         }
 
         $awayTotal = 0;
         foreach($this->listAwayPlayers() as $player) {
-            $awayTotal += $player['handicap'];
+            $awayTotal += $player->handicap;
         }
 
         // Determine the handicap array
