@@ -55,14 +55,14 @@ $maxGames = $session->getMaxHandicapGames();
                 <?php for($i = $firstPlayer; $i < ($firstPlayer + $numPlayers); $i++): ?>
                     <div class='row player'>
                         <div class='cell paid'>
-                            <?php print isset($info['selPlayers'][$i]) ? $info['selPlayers'][$i]['paid'] : '<br />'; ?>
+                            <?php print isset($info['selPlayers'][$i]) ? $info['selPlayers'][$i]->paid : '<br />'; ?>
                         </div>
                         <div class='cell playerName'>
-                            <?php print isset($info['selPlayers'][$i]) ? $info['selPlayers'][$i]['player']->getName() : '<br />'; ?>
+                            <?php print isset($info['selPlayers'][$i]) ? $info['selPlayers'][$i]->player->getName() : '<br />'; ?>
                         </div>
                         <div class='cell handicap'>
                             <?php if(isset($info['selPlayers'][$i])):
-                                print $info['selPlayers'][$i]['handicap'];
+                                print $info['selPlayers'][$i]->handicap;
                             endif; ?>
                         </div>
                     </div>
