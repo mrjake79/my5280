@@ -4,7 +4,8 @@
  * Class to represent a pairing of players as a doubles team.
  */
 
-class my5280_Doubles
+require_once(__DIR__ . '/player.php');
+class my5280_Doubles extends my5280_Player
 {
     /**
      * constructor
@@ -76,7 +77,7 @@ class my5280_Doubles
     /**
      * Get the team's unique ID.
      */
-    public function getId()
+    public function getId($AutoCreate = false)
     {
         $this->load();
         return isset($this->cnData->id) ? $this->cnData->id : null;
@@ -86,7 +87,7 @@ class my5280_Doubles
     /**
      * Retrieve the family name as the name of the doubles team.
      */
-    public function getName()
+    public function getName($LastNameFirst = false)
     {
         return $this->familyName;
     }
@@ -95,7 +96,7 @@ class my5280_Doubles
     /**
      * Save the doubles team.
      */
-    public function save()
+    public function save(&$Error = null)
     {
         // Load existing data
         $this->load();
@@ -152,22 +153,13 @@ class my5280_Doubles
 
 
     /**
-     * Assign the starting games.
-     */
-    public function setStartingGames($Value)
-    {
-        $this->load();
-        $this->cnMeta['my5280_lifetime_start'] = $Value;
-    }
-
-
-    /**
      * Assign the starting handicap.
      */
-    public function setStartingHandicap($Value)
+    public function setStartingHandicap($Handicap, $Games)
     {
         $this->load();
-        $this->cnMeta['my5280_handicap_start'] = $Value;
+        $this->cnMeta['my5280_handicap_start'] = $Handicap;
+        $this->cnMeta['my5280_lifetime_start'] = $Games;
     }
 
 

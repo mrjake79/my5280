@@ -7,6 +7,64 @@ require_once(MY5280_PLUGIN_DIR . 'lib/match.php');
 class my5280_Match_8BallScotch extends my5280_Match
 {
     /**
+     * Add a player to the match.
+     *
+     * @param object    Player to add or NULL for a forfeit.
+     * @param integer   Position of player in line-up.
+     * @return void
+     */
+    public function addPlayer($Position, $Player, $Handicap = null, $Paid = null)
+    {
+        parent::addPlayer($Position, $Player, $Handicap, $Paid);
+
+        if(isset($this->players[0]) && isset($this->players[1]) && $this->players[0]->player !== null && $this->players[1]->player !== null) {
+            $doubles = my5280::$instance->getDoubles($this->players[0]->player, $this->players[1]->player);
+            if(isset($this->players[4])) {
+                $this->players[4]->player_id = $doubles->getId();
+                $this->players[4]->player = $doubles;
+            } else {
+                $session = $this->getSession();
+                $info = array(
+                    'id' => null,
+                    'match_id' => $this->getId(),
+                    'position' => 4,
+                    'team_id' => $this->data->home_team,
+                    'player_id' => $doubles->getId(),
+                    'handicap' => round($doubles->getHandicap($this->getDate(), $session->getMaxHandicapGames()), 0),
+                    'paid' => null,
+                    'player' => $doubles,
+                );
+                $this->players[4] = (object) $info;
+                ksort($this->players);
+            }
+        }
+
+        if(isset($this->players[2]) && isset($this->players[3]) && $this->players[2]->player !== null && $this->players[3]->player !== null) {
+            $doubles = my5280::$instance->getDoubles($this->players[2]->player, $this->players[3]->player);
+            if(isset($this->players[5])) {
+                $this->players[5]->player_id = $doubles->getId();
+                $this->players[5]->player = $doubles;
+            } else {
+                if(!isset($session)) {
+                    $session = $this->getSession();
+                }
+
+                $this->players[5] = (object) array(
+                    'id' => null,
+                    'match_id' => $this->getId(),
+                    'position' => 5,
+                    'team_id' => $this->data->away_team,
+                    'player_id' => $doubles->getId(),
+                    'handicap' => round($doubles->getHandicap($this->getDate(), $session->getMaxHandicapGames()), 0),
+                    'paid' => null,
+                    'player' => $doubles,
+                );
+                ksort($this->players);
+            }
+        }
+    }
+
+    /**
      * Retrieve the away team doubles handicap.
      *
      * @param none
@@ -14,22 +72,11 @@ class my5280_Match_8BallScotch extends my5280_Match
      */
     public function getAwayDoublesHandicap()
     {
-        // Check for a stored handicap
-        if(isset($this->data->custom['awayDoublesHandicap']) && $this->data->custom['awayDoublesHandicap'] !== '') {
-            return $this->data->custom['awayDoublesHandicap'];
+        $this->listPlayers();
+        if(isset($this->players[5])) {
+            return $this->players[5]->handicap;
         }
-
-        // Check for away players
-        $players = $this->listPlayers();
-        if(!isset($players[2]) || $players[2]->player == null) return null;
-        if(!isset($players[3]) || $players[3]->player == null) return null;
-
-        // Get the session
-        $session = $this->getSession();
-
-        // Get the doubles for the players
-        $doubles = my5280::$instance->getDoubles($players[2]->player_id, $players[3]->player_id);
-        return round($doubles->getHandicap($this->getDate(), $session->getMaxHandicapGames()), 0);
+        return null;
     }
 
 
@@ -82,22 +129,11 @@ class my5280_Match_8BallScotch extends my5280_Match
      */
     public function getHomeDoublesHandicap()
     {
-        // Check for a stored handicap
-        if(isset($this->data->custom['homeDoublesHandicap']) && $this->data->custom['homeDoublesHandicap'] !== '') {
-            return $this->data->custom['homeDoublesHandicap'];
+        $this->listPlayers();
+        if(isset($this->players[4])) {
+            return $this->players[4]->handicap;
         }
-
-        // Check for home players
-        $players = $this->listPlayers();
-        if(!isset($players[0]) || $players[0]->player_id == null) return null;
-        if(!isset($players[1]) || $players[1]->player_id == null) return null;
-
-        // Get the session
-        $session = $this->getSession();
-
-        // Get the doubles for the players
-        $doubles = my5280::$instance->getDoubles($players[0]->player_id, $players[1]->player_id);
-        return round($doubles->getHandicap($this->getDate(), $session->getMaxHandicapGames()), 0);
+        return null;
     }
 
 
@@ -178,9 +214,7 @@ class my5280_Match_8BallScotch extends my5280_Match
 
         if($Game > 3) {
             // This is a doubles game
-            $home = my5280::$instance->getDoubles($players[0]->player_id, $players[1]->player_id);
-            $away = my5280::$instance->getDoubles($players[2]->player_id, $players[3]->player_id);
-            return array($home->getId(), $away->getId());
+            return array($players[4]->player_id, $players[5]->player_id);
         } else {
             $iHome = $Game % 2;
             switch($Game) {
@@ -279,7 +313,10 @@ class my5280_Match_8BallScotch extends my5280_Match
      */
     public function setAwayDoublesHandicap($Handicap)
     {
-        $this->data->custom['awayDoublesHandicap'] = $Handicap;
+        $this->listPlayers();
+        if(isset($this->players[5])) {
+            $this->players[5]->handicap = $Handicap;
+        }
     }
 
 
@@ -291,6 +328,9 @@ class my5280_Match_8BallScotch extends my5280_Match
      */
     public function setHomeDoublesHandicap($Handicap)
     {
-        $this->data->custom['homeDoublesHandicap'] = $Handicap;
+        $this->listPlayers();
+        if(isset($this->players[4])) {
+            $this->players[4]->handicap = $Handicap;
+        }
     }
 }

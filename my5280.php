@@ -224,7 +224,7 @@ class my5280 //extends LeagueManager
                 }
             }
         } else {
-            throw new Exception("Invalid player identifier.");
+            throw new Exception("Invalid player identifier: {$Name}");
         }
         // Return the my5280_Player object
         require_once(MY5280_PLUGIN_DIR . 'lib/player.php');
@@ -993,8 +993,12 @@ class my5280 //extends LeagueManager
 
                 // Handle doubles handicaps
                 if(isset($_POST['doublesHandicap'])) {
-                    $match->setHomeDoublesHandicap($_POST['doublesHandicap']['HOME']);
-                    $match->setAwayDoublesHandicap($_POST['doublesHandicap']['AWAY']);
+                    if($_POST['doublesHandicap']['HOME'] !== '') {
+                        $match->setHomeDoublesHandicap($_POST['doublesHandicap']['HOME']);
+                    }
+                    if($_POST['doublesHandicap']['AWAY'] !== '') {
+                        $match->setAwayDoublesHandicap($_POST['doublesHandicap']['AWAY']);
+                    }
                 }
 
                 // Process the scores

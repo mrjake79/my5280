@@ -19,7 +19,6 @@ class my5280AdminPanel
     {
         require_once(ABSPATH . 'wp-admin/includes/template.php');
 
-        add_action('admin_menu', array(&$this, 'menu'));
         add_action('leaguemanager_edit_match_5280pool', array($this, 'editMatch'), 10, 7);
         add_action('team_edit_form_5280pool', array($this, 'editTeam'));
         add_action('admin_enqueue_scripts', function($hook) {
@@ -132,33 +131,5 @@ class my5280AdminPanel
         $Team = new my5280_Team($Team);
 
         include(MY5280_PLUGIN_DIR . 'admin/team.php');
-    }
-
-
-    /**
-     * adds menu to the admin interface
-     *
-     * @param none
-     */
-    public function menu()
-    {
-        $page = add_submenu_page(
-            'leaguemanager',
-            __('Audit Matches','my5280'),
-            __('Audit Matches','my5280'),
-            'manage_options',
-            'my5280_audit_matches',
-            array($this, 'auditMatches')
-        );
-    }
-
-
-    /*
-     * auditMatches
-     */
-    public function auditMatches()
-    {
-        require_once(__DIR__ . '/utils/audit_matches.php');
-        audit_matches();
     }
 }

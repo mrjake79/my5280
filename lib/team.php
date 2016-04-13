@@ -297,7 +297,7 @@ class my5280_Team
 
         // Build the custom array
         $custom = array(
-            'address' => $this->info->address,
+            'address' => isset($this->info->address) ? $this->info->address : '',
             'number' => $this->info->number,
         );
 
@@ -312,8 +312,9 @@ class my5280_Team
                 $this->info->home,
                 $this->info->group,
                 $this->info->roster,
+                $this->info->profile,
                 $custom,
-                $old->logo
+                $this->info->logo
             );
         } else {
             // Add the new team

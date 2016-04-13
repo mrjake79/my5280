@@ -396,7 +396,7 @@ class my5280_Match
         if($this->players === null) {
             global $wpdb;
 
-            $sql = "SELECT * FROM {$wpdb->prefix}my5280_match_players WHERE match_id = {$this->getId()}";
+            $sql = "SELECT * FROM {$wpdb->prefix}my5280_match_players WHERE match_id = {$this->getId()} ORDER BY position";
 
             $players = array();
             foreach($wpdb->get_results($sql) as $player) {
@@ -551,6 +551,7 @@ class my5280_Match
                     $player_id = $player->id;
                     unset($player->id);
                     $wpdb->update($wpdb->prefix.'my5280_match_players', (array)$player, array('id' => $player_id));
+                    $this->players[$index]->id = $player_id;
                 } else {
                     unset($player->id);
                     $wpdb->insert($wpdb->prefix.'my5280_match_players', (array)$player);
@@ -565,6 +566,17 @@ class my5280_Match
                 foreach($game as $teamId => $score) {
                     $score = (array)$score;
                     unset($score['team_id']);
+
+                    if(!isset($score['match_player_id']) || $score['match_player_id'] === null)
+                    {
+                        $this->listPlayers();
+                        if($teamId == $this->data->home_team) {
+                            $playerIndex = $this->getHomePlayerNumber($index);
+                        } else {
+                            $playerIndex = $this->getAwayPlayerNumber($index);
+                        }
+                        $score['match_player_id'] = $this->players[$playerIndex]->id;
+                    }
 
                     if(isset($score['id'])) {
                         $id = $score['id'];
