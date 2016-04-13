@@ -22,7 +22,7 @@ $players = array_keys($Team->listPlayers());
     <td>
         <?php for($i = 0; $i < 10; $i++): ?>
             <div>
-                <select name="custom[players][]">
+                <select name="my5280_players[]">
                     <option value="NONE">(None/No More)</option>
                     <?php foreach($individuals as $id => $name): ?>
                         <option value="<?php print $id; ?>"

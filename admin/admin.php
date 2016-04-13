@@ -19,7 +19,6 @@ class my5280AdminPanel
     {
         require_once(ABSPATH . 'wp-admin/includes/template.php');
 
-        add_action('admin_menu', array(&$this, 'menu'));
         add_action('leaguemanager_edit_match_5280pool', array($this, 'editMatch'), 10, 7);
         add_action('team_edit_form_5280pool', array($this, 'editTeam'));
         add_action('admin_enqueue_scripts', function($hook) {
@@ -31,9 +30,36 @@ class my5280AdminPanel
         });
 
         add_filter('league_menu_5280pool', array($this, 'appendToLeagueMenu'));
-        add_filter('leaguemanager_matches_file_5280pool', function($league) {
+
+        add_filter('leaguemanager_matches_file_5280pool', function($league, $season) {
+            global $wpdb, $leaguemanager;
+
+            // Check for team update information
+            if(isset($_POST['updateLeague']) && $_POST['updateLeague'] === 'team' && isset($_POST['my5280_players']) && is_array($_POST['my5280_players'])) {
+                if($_POST['team_id'] == '') {
+                    $teamID = $wpdb->insert_id;
+                } else {
+                    $teamID = $_POST['team_id'];
+                }
+
+                // Get the team
+                include_once(__DIR__ . '/../lib/team.php');
+                $team = new my5280_Team($leaguemanager->getTeam($teamID));
+                $team->clearPlayers();
+                foreach($_POST['my5280_players'] as $playerID) {
+                    if($playerID !== 'NONE') {
+                        $player = my5280::$instance->getPlayer($playerID);
+                        if($player) {
+                            $team->addPlayer($player);
+                        }
+                    }
+                }
+                $team->save();
+            }
+
+            // Display the matches
             return __DIR__ . '/matches.php';
-        });
+        }, 10, 2);
     }
 
 
@@ -46,16 +72,23 @@ class my5280AdminPanel
     {
         global $leaguemanager;
 
-        // Easier match setup
-        if($leaguemanager->getSeason($leaguemanager->getCurrentLeague())) {
-            $menu['schedule'] = array(
-                'title' => 'Schedule',
-                'file' => dirname(__FILE__) . '/schedule.php',
-                'show' => true,
-            );
-        }
+        $menu['match']['title'] = 'Schedule';
+        $menu['match']['file'] = __DIR__ . '/schedule.php';
 
         return $menu;
+    }
+
+
+    /**
+     * Display the league report.
+     *
+     * @param none
+     */
+    public function displayLeagueReport()
+    {
+        global $leaguemanager;
+
+        include(MY5280_PLUGIN_DIR . 'admin/league_report.php');
     }
 
 
@@ -64,18 +97,28 @@ class my5280AdminPanel
      */
     public function editMatch($league, $teams, $season, $max_matches, $matches, $submit_title, $mode)
     {
+        $is_finals = null;
+        $cup = null;
+        $edit = true;
+        $bulk = isset($_GET['match_day']);
+        $mode = 'edit';
+        $class = 'alternate';
+        $non_group = 0;
+
         // Include the template for editing the match information
         include(MY5280_PLUGIN_DIR . 'admin/match.php');
 
-        // Call the showScoresheet method of my5280
-        my5280::$instance->showScoresheet(array(
-            'league_id' => $league->id,
-            'league_name' => '',
-            'season' => $season,
-            'title' => 'Enter Scores',
-            'mode' => 'edit',
-            'match_id' => $matches[0]->id,
-        ));
+        if(!$bulk) {
+            // Call the showScoresheet method of my5280
+            my5280::$instance->showScoresheet(array(
+                'league_id' => $league->id,
+                'league_name' => '',
+                'season' => $season,
+                'title' => 'Enter Scores',
+                'mode' => 'edit',
+                'match_id' => $matches[0]->id,
+            ));
+        }
     }
 
 
@@ -88,106 +131,5 @@ class my5280AdminPanel
         $Team = new my5280_Team($Team);
 
         include(MY5280_PLUGIN_DIR . 'admin/team.php');
-    }
-
-
-    /**
-     * adds menu to the admin interface
-     *
-     * @param none
-     */
-    public function menu()
-    {
-        /*
-        $page = add_submenu_page(
-            'leaguemanager',
-            __('Update Handicaps','my5280'),
-            __('Update Handicaps','my5280'),
-            'manage_options',
-            'my5280_update_handicaps',
-            array($this, 'updateHandicaps')
-        );
-         */
-    }
-
-
-    /**
-     * update:  Update the handicaps using all available match data.
-     */
-    public function updateHandicaps()
-    {
-        global $leaguemanager;
-
-        // Calculate total points, games, and wins for all players using data
-        // from every match in the system
-        $players = array();
-        foreach($leaguemanager->getLeagues() as $league) {
-            foreach($league->seasons as $season) {
-                $session = new my5280_Session($league, $season['name']);
-                foreach($session->listMatches() as $match) {
-                    // Process player points
-                    foreach($match->listPlayerPoints() as $player => $points) {
-                        // Add the player if not already in the list
-                        if(!isset($players[$player])) {
-                            $p = my5280::$instance->getPlayer($player);
-                            if($p) {
-                                $players[$player] = array(
-                                    'object' => $p,
-                                    'name' => $p->getName(),
-                                    'currentGames' => $p->getTotalGames(),
-                                    'currentPoints' => $p->getTotalPoints(),
-                                    'currentHandicap' => $p->getHandicap(),
-                                    'actualGames' => 0,
-                                    'actualPoints' => 0,
-                                );
-                            } else {
-                                $players[$player] = array(
-                                    'object' => null,
-                                    'name' => '!!! Player # ' . $player . ' (DELETED)',
-                                    'currentGames' => null,
-                                    'currentPoints' => null,
-                                    'currentHandicap' => null,
-                                    'actualGames' => 0,
-                                    'actualPoints' => 0,
-                                );
-                            }
-                        }
-
-                        // Update games and points
-                        $players[$player]['actualGames'] += $points['games'];
-                        $players[$player]['actualPoints'] += $points['points'];
-                    }
-                }
-            }
-        }
-
-        // Check for form submission
-        $saveChanges = (isset($_POST['action']) && !empty($_POST['action']));
-
-        // Process the player information
-        $changed = array();
-        foreach($players as $p) {
-            $gameChange = $p['actualGames'] - $p['currentGames'];
-            $pointChange = $p['actualPoints'] - $p['currentPoints'];
-            if(!$p['object']) {
-                $changed[] = $p;
-            } elseif($gameChange != 0 || $pointChange != 0) {
-                $p['object']->adjustHandicap($gameChange, $pointChange);
-                $p['actualHandicap'] = $p['object']->getHandicap();
-                $changed[] = $p;
-
-                if($saveChanges) {
-                    $p['object']->save();
-                }
-            }
-        }
-
-        // Sort the players
-        usort($changed, function($a, $b) {
-            return strcasecmp($a['name'], $b['name']);
-        });
-
-        // Include the template
-        include(MY5280_PLUGIN_DIR . 'admin/update_handicaps.php');
     }
 }

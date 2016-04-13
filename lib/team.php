@@ -264,22 +264,21 @@ class my5280_Team
      */
     public function listPlayers()
     {
+        global $wpdb;
+
         if($this->players === null) {
             $this->players = array();
-            if(isset($this->info->players)) {
-                include_once(dirname(__FILE__) . '/player.php');
-                foreach($this->info->players as $id) {
-                    if($id !== 'NONE') {
-                        $player = my5280::$instance->getPlayer($id);
-                        if($player) {
-                            $this->players[$id] = $player;
-                        }
-                    }
+
+            foreach($wpdb->get_results("SELECT * FROM {$wpdb->prefix}my5280_team_players WHERE team_id = {$this->getId()}") as $player) {
+                $player = my5280::$instance->getPlayer($player->player_id);
+                if($player) {
+                    $this->players[$player->getId()] = $player;
                 }
-                uasort($this->players, function($a, $b) {
-                    return strcasecmp($a->getName(), $b->getName());
-                });
             }
+
+            uasort($this->players, function($a, $b) {
+                return strcasecmp($a->getName(), $b->getName());
+            });
         }
         return $this->players;
     }
@@ -293,25 +292,14 @@ class my5280_Team
      */
     public function save()
     {
-        global $lmLoader;
+        global $lmLoader, $wpdb;
         $lmAdmin = $lmLoader->adminPanel;
 
         // Build the custom array
         $custom = array(
-            'address' => $this->info->address,
+            'address' => isset($this->info->address) ? $this->info->address : '',
             'number' => $this->info->number,
         );
-
-        // Save the new player list
-        if($this->players !== null) {
-            $players = array();
-            foreach($this->players as $player) {
-                $players[] = $player->getId();
-            }
-            $custom['players'] = $players;
-        } elseif(isset($this->info->players)) {
-            $custom['players'] = $this->info->players;
-        }
 
         // Determine if this is an existing team
         if(!empty($this->info->id)) {
@@ -324,8 +312,9 @@ class my5280_Team
                 $this->info->home,
                 $this->info->group,
                 $this->info->roster,
+                $this->info->profile,
                 $custom,
-                $old->logo
+                $this->info->logo
             );
         } else {
             // Add the new team
@@ -342,6 +331,27 @@ class my5280_Team
                 $custom
             );
             $this->info->id = $teamId;
+        }
+
+        // Save the new player list
+        if($this->players !== null) {
+            $existing = array();
+            foreach($wpdb->get_results("SELECT * FROM {$wpdb->prefix}my5280_team_players WHERE team_id = {$this->info->id}") as $player) {
+                $existing[$player->player_id] = $player;
+            }
+
+            foreach($this->players as $player) {
+                $playerID = $player->getId();
+                if(isset($existing[$playerID])) {
+                    unset($existing[$playerID]);
+                } else {
+                    $wpdb->insert($wpdb->prefix."my5280_team_players", array('team_id' => $this->info->id, 'player_id' => $playerID), array('%d', '%d'));
+                }
+            }
+
+            foreach($existing as $removed) {
+                $wpdb->delete($wpdb->prefix.'my5280_team_players', array('id' => $removed->id));
+            }
         }
     }
 

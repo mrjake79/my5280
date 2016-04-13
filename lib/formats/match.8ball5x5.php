@@ -83,6 +83,15 @@ class my5280_Match_8ball5x5 extends my5280_Match
 
 
     /**
+     * Determine if the player position is a home team position.
+     */
+    public function isHomeTeamPosition($Position)
+    {
+        return ($Position < 5);
+    }
+
+
+    /**
      * Retrieve an array of players for a particular game.  The 1st player in the array
      * is the home player and the 2nd is the away player.
      *
@@ -99,7 +108,7 @@ class my5280_Match_8ball5x5 extends my5280_Match
         }
 
         $players = $this->listPlayers();
-        return array($players[$iHome]['id'], $players[$iAway]['id']);
+        return array($players[$iHome]->player_id, $players[$iAway]->player_id);
     }
 
 
@@ -114,12 +123,12 @@ class my5280_Match_8ball5x5 extends my5280_Match
         // Determine the home and away total handicaps
         $homeTotal = 0;
         foreach($this->listHomePlayers() as $player) {
-            $homeTotal += $player['handicap'];
+            $homeTotal += $player->handicap;
         }
 
         $awayTotal = 0;
         foreach($this->listAwayPlayers() as $player) {
-            $awayTotal += $player['handicap'];
+            $awayTotal += $player->handicap;
         }
 
         // Determine the handicap array

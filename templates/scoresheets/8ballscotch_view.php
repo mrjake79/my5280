@@ -4,6 +4,9 @@ scoresheet view form for scotch doubles
 
  */
 
+$curMatchDate = ($curMatch ? $curMatch->getDate() : null);
+$maxGames = $session->getMaxHandicapGames();
+
 ?>
 <link rel='stylesheet' type='text/css' href="<?php print MY5280_PLUGIN_URL; ?>styles/scoresheet.css" />
 <?php if($title): ?>
@@ -34,7 +37,7 @@ scoresheet view form for scotch doubles
                             <div class='player'>
                                 <div>
                                     <?php print htmlentities($player->getName()); ?>: 
-                                    <?php print round($player->getHandicap(), 0); ?>
+                                    <?php print round($player->getHandicap($curMatchDate, $maxGames), 0); ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -45,7 +48,7 @@ scoresheet view form for scotch doubles
                             <div class='doubles'>
                                 <div>
                                     <?php print htmlentities($double->getName()); ?>:
-                                    <?php print round($double->getHandicap(), 0); ?>
+                                    <?php print round($double->getHandicap($curMatchDate, $maxGames), 0); ?>
                                 </div> 
                             </div>
                         <?php endforeach; ?>
@@ -63,14 +66,14 @@ scoresheet view form for scotch doubles
                 <?php for($i = $firstPlayer; $i < ($firstPlayer + 2); $i++): ?>
                     <div class='row player'>
                         <div class='cell paid'>
-                            <?php print (isset($info['selPlayers'][$i])) ? $info['selPlayers'][$i]['paid'] : '<br />' ?>
+                            <?php print (isset($info['selPlayers'][$i])) ? $info['selPlayers'][$i]->paid : '<br />' ?>
                         </div>
                         <div class='cell playerName'>
-                            <?php print isset($info['selPlayers'][$i]) ? ucwords($info['selPlayers'][$i]['player']->getName()) : '<br />'; ?>
+                            <?php print isset($info['selPlayers'][$i]) ? (isset($info['selPlayers'][$i]->player) ? ucwords($info['selPlayers'][$i]->player->getName()) : '(Unknown)') : '<br />'; ?>
                         </div>
                         <div class='cell handicap'>
                             <?php if(isset($info['selPlayers'][$i])):
-                                print $info['selPlayers'][$i]['handicap'];
+                                print $info['selPlayers'][$i]->handicap;
                             endif; ?>
                         </div>
                     </div>
