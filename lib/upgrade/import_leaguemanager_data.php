@@ -277,7 +277,7 @@ foreach($matches as $match) {
             if($isTeams) {
                 $round = floor($game / 5);
                 $homePosition = ($game % 5);
-                $awayPosition = $homePosition + $iRound;
+                $awayPosition = $homePosition + $round;
                 if($awayPosition < 5) {
                     $awayPosition += 5;
                 }
