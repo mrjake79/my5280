@@ -843,8 +843,12 @@ class my5280 //extends LeagueManager
                 return -1;
             } elseif($a['win%'] < $b['win%']) {
                 return 1;
+            } elseif($a['games'] > $b['games']) {
+                return -1;
+            } elseif($a['games'] < $b['games']) {
+                return 1;
             } else {
-                return 0;
+                return strcasecmp($a['name'], $b['name']);
             }
         });
 

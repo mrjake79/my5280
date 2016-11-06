@@ -14,11 +14,11 @@ $maxGames = $session->getMaxHandicapGames();
 <?php foreach($teams as $team): ?>
     <?php if(count($team->players)): ?>
         <table class='roster'>
-            <caption><?php print $team->title; ?></caption>
+            <caption><?php print $team->title . ' - ' . $team->getLocation(); ?></caption>
             <?php foreach($team->listPlayers() as $player): ?>
                 <tr>
                     <td><?php print $player->getName(); ?></td>
-                    <td><?php print round($player->getHandicap(null, $maxGames), 0); ?></td>
+                    <td style="text-align: right;"><?php print round($player->getHandicap(null, $maxGames), 0); ?></td>
                 </tr>
             <?php endforeach; ?>
         </table>

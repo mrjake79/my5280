@@ -422,22 +422,53 @@ class my5280_Match
     public function listPlayerPoints()
     {
         $players = array();
-        foreach($this->listScores() as $score) {
-            if(is_array($score)) {
-                foreach($score as $player => $points) {
-                    if($player == null) continue;
-                    if(!isset($players[$player])) {
-                        $players[$player] = array('points' => 0, 'games' => 0, 'wins' => 0);
-                    }
-                    $players[$player]['points'] += $points->score;
-                    $players[$player]['games']++;
-                    if($points->score > 7) {
-                        $players[$player]['wins']++;
-                    }
+
+        foreach($this->listPlayers() as $player)
+        {
+            $players[$player->id] = array(
+                'player_id' => $player->player_id,
+                'points' => 0,
+                'games' => 0,
+                'wins' => 0,
+                'forfeitWins' => 0,
+            );
+        }
+
+        foreach($this->listScores() as $game => $scores) {
+            list($home_score, $away_score) = array_values($scores);
+
+            $home_player = $home_score->match_player_id;
+            $players[$home_player]['points'] += $home_score->score;
+            $players[$home_player]['games']++;
+
+            $away_player = $away_score->match_player_id;
+            $players[$away_player]['points'] += $away_score->score;
+            $players[$away_player]['games']++;
+
+            if($home_score->score > $away_score->score)
+            {
+                $players[$home_player]['wins']++;
+                if($players[$away_player]['player_id'] == null)
+                {
+                    $players[$home_player]['forfeitWins']++;
+                }
+            }
+            elseif($away_score->score > $home_score->score)
+            {
+                $players[$away_player]['wins']++;
+                if($players[$home_player]['player_id'] == null)
+                {
+                    $players[$away_player]['forfeitWins']++;
                 }
             }
         }
-        return $players;
+
+        $return = array();
+        foreach($players as $player)
+        {
+            $return[$player['player_id']] = $player;
+        }
+        return $return;
     }
 
 
