@@ -145,8 +145,8 @@
     display: table-cell;
 }
 
-@media (max-width: 642px) {
-    /*
+@media screen and (max-width: 642px) {
+    
     .table.teamPlayers, .table.rounds {
         display: none;
     }
@@ -160,7 +160,8 @@
         float: left;
         padding-right: 10px;
     }
-    */
+    
 }
     
 .matchNumber { float: left; font-size: 5pt; vertical-align: top; border-right: solid 1px; width: 1.5em; height: 100%; }
+

@@ -99,7 +99,19 @@ class my5280_Player
             $sql .= ") a";
 
             $result = $wpdb->get_results($sql);
-            return $result[0]->handicap;
+                        
+            if($result == null){
+            	return 7;            	
+            }
+            else {
+            	if($result[0] == null){
+            		return 7;
+            	}
+            	else{
+            		return $result[0]->handicap;
+            	}             	
+            }
+            
         } else {
             return null;
         }

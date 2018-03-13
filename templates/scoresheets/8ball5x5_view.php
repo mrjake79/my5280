@@ -14,7 +14,7 @@ $maxGames = $session->getMaxHandicapGames();
     .scoresheet .score.played { vertical-align: middle; }
 </style>
 <h2 class='subtitle'><?php print $title; ?></h2>
-<br style='clear: left;' />
+
 <div class='scoresheet 8ball5x5'>
     <div class='dateBox'>
         Date:
