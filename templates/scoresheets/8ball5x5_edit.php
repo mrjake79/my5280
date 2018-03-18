@@ -63,7 +63,7 @@ $maxGames = $session->getMaxHandicapGames();
                     <?php for($i = $firstPlayer; $i < ($firstPlayer + $numPlayers); $i++): ?>
                         <div class='row player'>
                             <div class='cell paid'>
-                                <input type='number' name='paid[]' maxlength='2' size='2' min='0' max='99' step='1' 
+                                <input type='number' name='paid[]' maxlength='2' size='2' min='0' max='99' step='1'
                                 <?php if(isset($info['selPlayers'][$i])) print 'value="' . round($info['selPlayers'][$i]->paid, 0) . '"'; ?>
                                 />
                             </div>
@@ -122,7 +122,7 @@ $maxGames = $session->getMaxHandicapGames();
                     <?php for($i = $firstPlayer; $i < ($firstPlayer + 5); $i++): ?>
                         <div class='row scores player<?php print $i; ?>'>
                             <?php for($j = 0; $j < 5; $j++): ?>
-                                <?php 
+                                <?php
                                     // Determine the game number
                                     if($label == 'AWAY') {
                                         $iGame = $curMatch->getAwayGame($j, $i);
@@ -132,7 +132,7 @@ $maxGames = $session->getMaxHandicapGames();
                                 ?>
                                 <div class="cell score" round="<?php print $j; ?>" player="<?php print $i; ?>">
                                     <?php if($label == 'HOME'): ?>
-                                        <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                        <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1'
                                             class="HOMEgame<?php print $iGame; ?> HOMEgame"
                                             <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
                                         />
@@ -183,7 +183,7 @@ $maxGames = $session->getMaxHandicapGames();
 <script type='text/javascript'>
     function my5280_getAwayGame(homeGame)
     {
-        // Determine the round 
+        // Determine the round
         var iRound = Math.floor(homeGame / 5);
 
         // Calculate the away game

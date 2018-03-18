@@ -730,19 +730,71 @@ class my5280_Match
      * @param none
      * @return void
      */
-    protected function updateTotalScores()
-    {
-        // Determine total handicaps for each time
-        $totalHome = 0; $totalAway = 0;
-        foreach($this->listRoundHandicaps() as $handicaps) {
-            $totalHome += $handicaps[0];
-            $totalAway += $handicaps[1];
-        }
+     protected function updateTotalScores()
+     {
+         // Determine total handicaps for each time
+         $totalHome = 0; $totalAway = 0;
 
-        // Determine the total home and away points
-        $this->data->home_points = $totalHome + array_sum($this->listHomeScores());
-        $this->data->away_points = $totalAway + array_sum($this->listAwayScores());
-    }
+         foreach($this->listRoundHandicaps() as $handicaps) {
+             $totalHome += $handicaps[0];
+             $totalAway += $handicaps[1];
+         }
+
+         //$totalHome = $homeTotalHCP;
+         //$totalAway = $awayTotalHCP;
+
+         $homeHcp = 0;
+         foreach($this->listHomePlayers() as $index => $player){
+           $id = $player->player_id;
+           if($id){
+             // Calculate total home handicap
+             $homeHcp += $player->handicap;
+           }
+         }
+
+         $awayHcp = 0;
+         foreach($this->listAwayPlayers() as $index => $player){
+           $id = $player->player_id;
+           if($id){
+             // Calculate total home handicap
+             $awayHcp += $player->handicap;
+           }
+         }
+
+         $boolHomeOverHcp = 0;
+         $boolAwayOverHcp = 0;
+
+         $AddToHome = 0;
+         $AddToAway = 0;
+
+         if($homeHcp > $awayHcp) {
+             $tempHomeHCP = 0;
+             $tempAwayHCP = $homeHcp - $awayHcp;
+             if($homeHcp > 42) {
+                 $boolHomeOverHcp = 1;
+                 $AddToAway += $homeHcp - 42;
+             }
+         } else {
+             $tempAwayHCP = 0;
+             $tempHomeHCP = $awayHcp - $homeHcp;
+             if($awayHcp > 42) {
+               $boolAwayOverHcp = 1;
+               $AddToHome += $awayHcp - 42;
+             }
+         }
+
+         if($boolHomeOverHcp == 1){
+           $totalAway += ( $AddToAway * 5);
+         }
+         if ($boolAwayOverHcp ==1){
+           $totalHome += ( $AddToHome * 5);
+         }
+
+         // Determine the total home and away points
+         $this->data->home_points = $totalHome + array_sum($this->listHomeScores());
+         $this->data->away_points = $totalAway + array_sum($this->listAwayScores());
+     }
+
 
 
     /**
