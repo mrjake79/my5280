@@ -43,7 +43,7 @@ $maxGames = $session->getMaxHandicapGames();
                         <?php foreach($team->listPlayers() as $player): ?>
                             <div class='player'>
                                 <div>
-                                    <?php print $player->getName(); ?>: 
+                                    <?php print $player->getName(); ?>:
                                     <?php print round($player->getHandicap($curMatchDate, $maxGames), 0); ?>
                                 </div>
                             </div>
@@ -56,7 +56,7 @@ $maxGames = $session->getMaxHandicapGames();
                                 <div>
                                     <?php print $double->getName(); ?>:
                                     <?php print round($double->getHandicap($curMatchDate, $maxGames), 0); ?>
-                                </div> 
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -64,7 +64,7 @@ $maxGames = $session->getMaxHandicapGames();
                         <div class='caption'>Active Doubles HCP</div>
                         <div class='row'>
                             <div class='cell'>
-                                <input type='number' name="doublesHandicap[<?php print $label; ?>]" max="15" min="0" size='2' length='2' 
+                                <input type='number' name="doublesHandicap[<?php print $label; ?>]" max="15" min="0" size='2' length='2'
                                 value="<?php print $info['doublesHandicap']; ?>"
                                 />
                             </div>
@@ -125,13 +125,13 @@ $maxGames = $session->getMaxHandicapGames();
                     <?php for($iPlayer = $firstPlayer; $iPlayer < ($firstPlayer + 2); $iPlayer++): ?>
                         <div class='row scores player<?php print $iPlayer; ?>'>
                             <?php for($iRound = 0; $iRound < 2; $iRound++): ?>
-                                <?php 
+                                <?php
                                     // Determine the game number
                                     $iGame = call_user_func(array($curMatch, 'get' . $label . 'Game'), $iRound, $iPlayer);
                                 ?>
                                 <div class='cell score game<?php print $iGame; ?>' player="<?php print $iPlayer; ?>" round="<?php print $iRound; ?>">
                                     <?php if($label == 'HOME'): ?>
-                                        <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                        <input type='number' name='score[<?php print $iGame; ?>]' maxlength='2' size='2' min='0' max='15' step='1'
                                             class="HOMEgame HOMEgame<?php print $iGame; ?>"
                                             <?php if(isset($info['scores'][$iGame])) print 'value="' . $info['scores'][$iGame] . '"'; ?>
                                         />
@@ -171,7 +171,7 @@ $maxGames = $session->getMaxHandicapGames();
                         <?php for($i = 4; $i < 9; $i++): ?>
                             <div class='cell score game<?php print $i; ?>'>
                                 <?php if($label == 'HOME'): ?>
-                                    <input type='number' name='score[<?php print $i; ?>]' maxlength='2' size='2' min='0' max='15' step='1' 
+                                    <input type='number' name='score[<?php print $i; ?>]' maxlength='2' size='2' min='0' max='15' step='1'
                                         class="HOMEgame HOMEgame<?php print $i; ?>"
                                     <?php if(isset($info['scores'][$i])) print 'value="' . $info['scores'][$i] . '"'; ?>
                                     />
@@ -191,7 +191,7 @@ $maxGames = $session->getMaxHandicapGames();
                             <div class='cell handicap'>
                                 <?php if(isset($roundHandicaps[$iRound])) print ($label == 'HOME' ? $roundHandicaps[$iRound][0] : $roundHandicaps[$iRound][1]); ?>
                             </div>
-                        <?php endfor; ?> 
+                        <?php endfor; ?>
                         <div class='cell totalHandicap'><?php print $info['totalHcpPoints']; ?></div>
                     </div>
                     <div class='row totals'>

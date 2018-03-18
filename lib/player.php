@@ -78,32 +78,46 @@ class my5280_Player
      *                        If null, all recorded games are included (past and future).
      * @return float
      */
-    public function getHandicap($AsOfDate = null, $GameLimit = null)
-    {
-        global $wpdb;
-        $player_id = $this->getId();
-        if($player_id != null) {
-            $sql = "SELECT SUM(a.score) / COUNT(*) AS handicap 
-                FROM (SELECT s.score FROM {$wpdb->prefix}my5280_match_scores s
-                JOIN {$wpdb->prefix}my5280_match_players p ON p.id = s.match_player_id
-                JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
-                WHERE p.player_id = {$this->getId()}";
+     public function getHandicap($AsOfDate = null, $GameLimit = null)
+     {
+         global $wpdb;
+         $player_id = $this->getId();
+         if($player_id != null) {
+             $sql = "SELECT SUM(a.score) / COUNT(*) AS handicap
+                 FROM (SELECT s.score FROM {$wpdb->prefix}my5280_match_scores s
+                 JOIN {$wpdb->prefix}my5280_match_players p ON p.id = s.match_player_id
+                 JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
+                 WHERE p.player_id = {$this->getId()}";
 
-            if($AsOfDate !== null) {
-                $sql .= " AND m.date < '" . $AsOfDate . " 00:00:00'";
-            }
-            $sql .= " ORDER BY m.date DESC, s.game DESC";
-            if($GameLimit != null) {
-                $sql .= " LIMIT {$GameLimit}";
-            }
-            $sql .= ") a";
+             if($AsOfDate !== null) {
+                 $sql .= " AND m.date < '" . $AsOfDate . " 00:00:00'";
+             }
+             $sql .= " ORDER BY m.date DESC, s.game DESC";
+             if($GameLimit != null) {
+                 $sql .= " LIMIT {$GameLimit}";
+             }
+             $sql .= ") a";
 
-            $result = $wpdb->get_results($sql);
-            return $result[0]->handicap;
-        } else {
-            return null;
-        }
-    }
+             $result = $wpdb->get_results($sql);
+
+             if($result == null){
+               return $result[0]->handicap = 7.0;
+             }
+             else {
+               if($result[0] == null){
+                 return $result[0]->handicap = 7.0;
+               } else if($result[0]->handicap == null){
+                 return $result[0]->handicap = 7.0;
+               }
+               else{
+                 return $result[0]->handicap;
+               }
+             }
+
+         } else {
+             return null;
+         }
+     }
 
 
     /**
@@ -235,7 +249,7 @@ class my5280_Player
                     $lookup[$key] = $value;
                 }
             }
-            
+
             // Build the update and add arrays
             foreach($this->meta as $key => $value) {
                 if(isset($lookup[$key])) {
