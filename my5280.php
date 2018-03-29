@@ -610,6 +610,8 @@ class my5280 //extends LeagueManager
                 }
             }
 
+
+
             // Get round handicaps
             $roundHandicaps = $curMatch->listRoundHandicaps();
 
@@ -664,6 +666,28 @@ class my5280 //extends LeagueManager
                 }
             }
 
+            $boolHomeOverHcp = 0;
+            $boolAwayOverHcp = 0;
+
+            $AddToHome = 0;
+            $AddToAway = 0;
+
+            if($homeHcp > $awayHcp) {
+                $tempHomeHCP = 0;
+                $tempAwayHCP = $homeHcp - $awayHcp;
+                if($homeHcp > 42) {
+                    $boolHomeOverHcp = 1;
+                    $AddToAway += $homeHcp - 42;
+                }
+            } else {
+                $tempAwayHCP = 0;
+                $tempHomeHCP = $awayHcp - $homeHcp;
+                if($awayHcp > 42) {
+                  $boolAwayOverHcp = 1;
+                  $AddToHome += $awayHcp - 42;
+                }
+            }
+
             // Add the away team to the list
             $teams['AWAY'] = array(
                 'team' => $team,
@@ -691,6 +715,12 @@ class my5280 //extends LeagueManager
                             $hcpPts = $roundHandicaps[$round][ ($key == 'HOME' ? 0 : 1) ];
                         } else {
                             $hcpPts = 0;
+                        }
+
+                        if($key == 'AWAY' && $boolHomeOverHcp == 1){
+                          $hcpPts += $AddToAway;
+                        } else if ($key == 'HOME' && $boolAwayOverHcp ==1){
+                          $hcpPts += $AddToHome;
                         }
 
                         // Add the handicap points to the round totals, total handicap, and total points for the team
@@ -946,7 +976,7 @@ class my5280 //extends LeagueManager
 
         // Redirect back to the page
         header(
-            "Location: " . admin_url('admin.php') 
+            "Location: " . admin_url('admin.php')
             . '?page=leaguemanager&subpage=schedule&league_id=' . $session->getLeagueId()
             . '&season=' . $session->getName()
         );
@@ -1013,7 +1043,7 @@ class my5280 //extends LeagueManager
                 // Save the match
                 if($match->save()) {
                     header(
-                        "Location: " . admin_url('admin.php') 
+                        "Location: " . admin_url('admin.php')
                         . '?page=leaguemanager&subpage=match&league_id=' . $match->getLeagueId()
                         . '&edit=' . $match->getId() . '&season=' . $match->getSeasonName()
                     );

@@ -10,9 +10,11 @@ usort($teams, function($a, $b) {
 
 $maxGames = $session->getMaxHandicapGames();
 
+ //print_r($teams);
+
 ?>
 <?php foreach($teams as $team): ?>
-    <?php if(count($team->players)): ?>
+    <?php if(count($team->listPlayers())): ?>
         <table class='roster'>
             <caption><?php print $team->title . ' - ' . $team->getLocation(); ?></caption>
             <?php foreach($team->listPlayers() as $player): ?>

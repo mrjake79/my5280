@@ -47,11 +47,11 @@ class my5280_Doubles extends my5280_Player
         global $wpdb;
         $player_id = $this->getId();
         if($player_id != null) {
-            $sql = "SELECT SUM(a.score) / COUNT(*) AS handicap 
+            $sql = "SELECT SUM(a.score) / COUNT(*) AS handicap
                 FROM (SELECT s.score FROM {$wpdb->prefix}my5280_match_scores s
                 JOIN {$wpdb->prefix}my5280_match_players p ON p.id = s.match_player_id
                 JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
-                WHERE p.player_id = {$this->getId()}";
+                WHERE p.player_id = {$this->getId()} ";
 
             if($AsOfDate !== null) {
                 $sql .= " AND m.date < '" . $AsOfDate . " 00:00:00'";
@@ -64,12 +64,20 @@ class my5280_Doubles extends my5280_Player
 
             $result = $wpdb->get_results($sql);
             if(isset($result[0])) {
+              if($result[0]->handicap == null){
+                return $result[0]->handicap = 7.0;
+              }
+              else{
                 return $result[0]->handicap;
+              }
+            } else{
+                return 7;
             }
         }
         foreach($this->familyMembers as $player) {
             $totalPoints += round($player->getHandicap($AsOfDate, $MaxGames), 0);
         }
+
         return $totalPoints / 2;
     }
 

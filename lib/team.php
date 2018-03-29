@@ -301,6 +301,7 @@ class my5280_Team
             'number' => $this->info->number,
         );
 
+        // ADD this back before $custom if needed: $this->info->profile,
         // Determine if this is an existing team
         if(!empty($this->info->id)) {
             $lmAdmin->editTeam(
@@ -312,7 +313,6 @@ class my5280_Team
                 $this->info->home,
                 $this->info->group,
                 $this->info->roster,
-                $this->info->profile,
                 $custom,
                 $this->info->logo
             );
