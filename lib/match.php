@@ -494,10 +494,9 @@ class my5280_Match
             global $wpdb;
 
             $sql = "SELECT scores.*, players.team_id "
-                . "FROM {$wpdb->prefix}my5280_match_scores scores, "
-                . "{$wpdb->prefix}my5280_match_players players "
-                . "WHERE players.id = scores.match_player_id "
-                . "AND match_id = {$this->getId()}";
+                . "FROM {$wpdb->prefix}my5280_match_players players  "
+                . "INNER JOIN {$wpdb->prefix}my5280_match_scores scores ON players.id = scores.match_player_id"
+                . "WHERE match_id = {$this->getId()} ";
 
             $scores = array();
             foreach($wpdb->get_results($sql) as $score) {
