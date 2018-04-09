@@ -81,12 +81,18 @@ class my5280_Player
      public function getHandicap($AsOfDate = null, $GameLimit = null)
      {
          global $wpdb;
+
+         try{
+
          $player_id = $this->getId();
          if($player_id != null) {
-             $sql = "SELECT SUM(a.score) / COUNT(*) AS handicap
-                 FROM (SELECT s.score FROM {$wpdb->prefix}my5280_match_scores s
-                 JOIN {$wpdb->prefix}my5280_match_players p ON p.id = s.match_player_id
-                 JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
+
+             $wpdb->query("SET SESSION TRANSACTION READ ONLY");
+             $sql = "
+                SELECT SUM(s.score) / COUNT(*) AS handicap
+                FROM {$wpdb->prefix}my5280_match_players p
+                 INNER JOIN {$wpdb->prefix}my5280_match_scores s ON p.id = s.match_player_id
+                 INNER JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
                  WHERE p.player_id = {$this->getId()}";
 
              if($AsOfDate !== null) {
@@ -96,27 +102,40 @@ class my5280_Player
              if($GameLimit != null) {
                  $sql .= " LIMIT {$GameLimit}";
              }
-             $sql .= ") a";
+             //$sql .= ") as a ;  ";
+             $sql .= ";  ";
+
+             //$sql .= " SET SESSION TRANSACTION READ ONLY; ";
+
+
+             //$sql .= " SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;"
 
              $result = $wpdb->get_results($sql);
 
-             if($result == null){
-               return $result[0]->handicap = 7.0;
+             return $result[0]->handicap;
+
+             /*if($result == null){
+               return 7.0; //return $result[0]->handicap = 7.0;
              }
              else {
                if($result[0] == null){
-                 return $result[0]->handicap = 7.0;
+                 return 7.0; //return $result[0]->handicap = 7.0;
                } else if($result[0]->handicap == null){
-                 return $result[0]->handicap = 7.0;
+                 return 7.0; //return $result[0]->handicap = 7.0;
                }
                else{
                  return $result[0]->handicap;
                }
-             }
+             }*/
 
          } else {
              return null;
          }
+
+       }catch(Exception $e){
+         return null;
+       }
+
      }
 
 

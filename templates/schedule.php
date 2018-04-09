@@ -3,7 +3,7 @@
 Template page for the league schedule
 
 The following variables are usable:
-	
+
 	$session: instance of my5280_session
     $teams: array of teams
     $matches: array of matches
@@ -58,25 +58,32 @@ $firstWeek = array_shift($date_keys);
                     <div class='noMatchContainer blank'><br /></div>
                 <?php endfor; ?>
 			<?php else: ?>
-                    <?php foreach($data['matches'] as $match): ?>
+                    <?php foreach($data['matches'] as $match):
+                        $awayTeamName = $match->getAwayTeam()->getName();
+                        $awayTeamScore = $match->getAwayScore();
+
+                        $homeTeamName = $match->getHomeTeam()->getName();
+                        $homeTeamScore = $match->getHomeScore();
+
+                      ?>
                         <div class='matchContainer'>
                             <div class='match'>
                                 <div class='matchPart'>
                                     <?php if($scoresheet_url): ?>
                                         <a href="<?php print $scoresheet_url; ?>?match=<?php print $match->getId(); ?>">
                                     <?php endif; ?>
-                                    <?php print $match->getAwayTeam()->getName(); ?>
-                                    <?php if($match->getHomeScore() > 0 || $match->getAwayScore() > 0): 
-                                        print '(' . $match->getAwayScore() . ')';
+                                    <?php print $awayTeamName; ?>
+                                    <?php if($homeTeamScore > 0 || $awayTeamScore > 0):
+                                        print '(' . $awayTeamScore . ')';
                                     endif; ?><br />
-                                    <small>@</small> 
-                                    <?php print $match->getHomeTeam()->getName(); ?>
-                                    <?php if($match->getHomeScore() > 0 || $match->getAwayScore() > 0): 
-                                        print '(' . $match->getHomeScore() . ')';
+                                    <small>@</small>
+                                    <?php print $homeTeamName; ?>
+                                    <?php if($homeTeamScore > 0 || $awayTeamScore > 0):
+                                        print '(' . $homeTeamScore . ')';
                                     endif; ?>
                                     <?php if($scoresheet_url) print '</a>'; ?>
                                 </div>
-                                <?php if($match->getHomeScore() == 0 && $match->getAwayScore() == 0): ?>
+                                <?php if($homeTeamScore == 0 && $awayTeamScore == 0): ?>
                                     <div class='location matchPart'>
                                         <?php print '(' . htmlentities(ucwords($match->getLocation())) . ')'; ?>
                                     </div>
