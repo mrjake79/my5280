@@ -1,2 +1,4 @@
 *.swp
+admin/error_log
+templates/scoresheets/error_log
 error_log

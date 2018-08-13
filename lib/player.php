@@ -87,12 +87,12 @@ class my5280_Player
          $player_id = $this->getId();
          if($player_id != null) {
 
-             $wpdb->query("SET SESSION TRANSACTION READ ONLY");
+             //$wpdb->query("SET SESSION TRANSACTION READ ONLY");
              $sql = "
                 SELECT SUM(s.score) / COUNT(*) AS handicap
                 FROM {$wpdb->prefix}my5280_match_players p
                  INNER JOIN {$wpdb->prefix}my5280_match_scores s ON p.id = s.match_player_id
-                 INNER JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
+                 JOIN {$wpdb->prefix}leaguemanager_matches m ON m.id = p.match_id
                  WHERE p.player_id = {$this->getId()}";
 
              if($AsOfDate !== null) {

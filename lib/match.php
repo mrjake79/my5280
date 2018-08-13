@@ -494,9 +494,10 @@ class my5280_Match
             global $wpdb;
 
             $sql = "SELECT scores.*, players.team_id "
-                . "FROM {$wpdb->prefix}my5280_match_players players  "
-                . "INNER JOIN {$wpdb->prefix}my5280_match_scores scores ON players.id = scores.match_player_id"
-                . "WHERE match_id = {$this->getId()} ";
+                . "FROM {$wpdb->prefix}my5280_match_scores scores, "
+                . "{$wpdb->prefix}my5280_match_players players "
+                . "WHERE players.id = scores.match_player_id "
+                . "AND match_id = {$this->getId()}";
 
             $scores = array();
             foreach($wpdb->get_results($sql) as $score) {
@@ -788,7 +789,14 @@ class my5280_Match
          if ($boolAwayOverHcp ==1){
            $totalHome += ( $AddToHome * 5);
          }
-
+	
+	 /*if($totalHome == 0){
+           $totalAway += 200;
+         }
+         if($totalAway == 0){
+           $totalHome += 200;
+         }*/
+         
          // Determine the total home and away points
          $this->data->home_points = $totalHome + array_sum($this->listHomeScores());
          $this->data->away_points = $totalAway + array_sum($this->listAwayScores());

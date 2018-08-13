@@ -3,7 +3,7 @@
 Template page for the league standings
 
 The following variables are usable:
-
+	
     $league: the league
 	$session: instance of my5280_session
     $teams: array of teams
@@ -19,12 +19,9 @@ The following variables are usable:
         <th class='header cell'>Avg</th>
     </tr>
     <?php foreach($teams as $team): ?>
-        <?php
-            if($team->title == 'BYE') continue;
+        <?php 
+            if($team->title == 'BYE') continue; 
             $weeks = count($team->stats['matches']);
-
-            $matchesPlayed = $team->getMatchesPlayed();
-            $totalPoints = $team->getTotalPoints();
         ?>
         <tr>
             <td class='cell'><?php print $team->getRank(); ?></td>
@@ -32,11 +29,11 @@ The following variables are usable:
                 <a href="?team=<?php print$team->getId() ?>"><?php print $team->getName(); ?></a>
             </td>
             <td class='cell'>
-                <?php print $totalPoints; ?> /
-                <?php print $matchesPlayed; ?>
+                <?php print $team->getTotalPoints(); ?> /
+                <?php print $team->getMatchesPlayed(); ?>
             </td>
             <td class='cell'>
-                <?php if($matchesPlayed > 0) print round($totalPoints / $matchesPlayed, 2); ?>
+                <?php if($team->getMatchesPlayed() > 0) print round($team->getTotalPoints() / $team->getMatchesPlayed(), 2); ?>
             </td>
         </tr>
     <?php endforeach; ?>

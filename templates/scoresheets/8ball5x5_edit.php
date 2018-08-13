@@ -81,22 +81,15 @@ $maxGames = $session->getMaxHandicapGames();
                                     >(Other)</option>
                                 </select>
                                 <div class='otherPlayer'>
-
                                     <select id="otherPlayer<?php print $i; ?>" class='otherPlayer' name="otherPlayer[<?php print $i; ?>]" sel="<?php if(isset($players[$i]) && $players[$i]['id'] != null) print $players[$i]['id']; ?>">
                                         <option value="">(Other Player)</option>
-                                        <?php if($i == 0): foreach($allPlayers as $player):
+                                        <?php if($i == 0): foreach($allPlayers as $player): 
                                         			?>
-                                            <?php try { ?>
-                                            <?php if($player == null || $player->getId() == null ) { continue; } ?>
                                             <option value="<?php $player->getId(); ?>"
-                                            handicap="<?php /*print("0");*/ print round($player->getHandicap($curMatchDate, $maxGames), 0); ?>"
+                                            handicap="0" 
                                             ><?php print $player->getName(); ?></option>
-                                          <?php } catch (Exception $e) {
-                                                echo "error";
-                                            } ?>
                                         <?php endforeach; endif; ?>
                                     </select>
-
                                 </div>
                             </div>
                             <div class='cell handicap'>

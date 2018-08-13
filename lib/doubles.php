@@ -47,13 +47,13 @@ class my5280_Doubles extends my5280_Player
         global $wpdb;
         $player_id = $this->getId();
         if($player_id != null) {
+        
+            //$wpdb->query("SET SESSION TRANSACTION READ ONLY");
 
-          $wpdb->query("SET SESSION TRANSACTION READ ONLY");
-
-            $sql = " SELECT SUM(s.score) / COUNT(*)
+            $sql = " SELECT SUM(s.score) / COUNT(*) AS handicap
                 FROM {$wpdb->prefix}leaguemanager_matches m
-                INNER JOIN {$wpdb->prefix}my5280_match_players p ON m.id = p.match_id
-                INNER JOIN {$wpdb->prefix}my5280_match_scores s ON p.id = s.match_player_id
+                JOIN {$wpdb->prefix}my5280_match_players p ON m.id = p.match_id
+                JOIN {$wpdb->prefix}my5280_match_scores s ON p.id = s.match_player_id
                 WHERE p.player_id = {$this->getId()} ";
 
             if($AsOfDate !== null) {
@@ -66,17 +66,22 @@ class my5280_Doubles extends my5280_Player
             $sql .= " ;";
 
             $result = $wpdb->get_results($sql);
-
+            
+            //return $result[0]->handicap;
+            
             if(isset($result[0])) {
               if($result[0]->handicap == null){
                 return $result[0]->handicap = 7.0;
               }
               else{
-
+                return $result[0]->handicap;
               }
+                           
             } else{
-                return 7;
+                return $result[0]->handicap = 7.0;
             }
+            
+            //return $result[0]->handicap;
         }
         foreach($this->familyMembers as $player) {
             $totalPoints += round($player->getHandicap($AsOfDate, $MaxGames), 0);
