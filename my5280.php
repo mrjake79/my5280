@@ -330,7 +330,7 @@ class my5280 //extends LeagueManager
      */
     function settings($league)
     {
-        $choices = array('8ballscotch' => 'Scotch Doubles', '8ball5x5' => '8-Ball 5x5', '8ballsingles' => '8-Ball Singles');
+        $choices = array('8ballscotch' => 'Scotch Doubles', '8ball5x5' => '8-Ball 5x5', '8ball3x3' => '8-Ball 3x3', '8ballsingles' => '8-Ball Singles');
 
         ?><tr valign="top">
             <th scope="row"><label for="league_format">League Format</label></th>
